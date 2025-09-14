@@ -1,8 +1,22 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmbyDownloadsSync", "src\EmbyDownloadsSync\EmbyDownloadsSync.csproj", "{FBE69C8F-CA68-4C05-8DFF-500F28026FA7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmbyDownloadsSync.Tests", "tests\EmbyDownloadsSync.Tests\EmbyDownloadsSync.Tests.csproj", "{81908F1F-0F5A-4340-AADC-535769B7C4A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FBE69C8F-CA68-4C05-8DFF-500F28026FA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBE69C8F-CA68-4C05-8DFF-500F28026FA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBE69C8F-CA68-4C05-8DFF-500F28026FA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBE69C8F-CA68-4C05-8DFF-500F28026FA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81908F1F-0F5A-4340-AADC-535769B7C4A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81908F1F-0F5A-4340-AADC-535769B7C4A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81908F1F-0F5A-4340-AADC-535769B7C4A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81908F1F-0F5A-4340-AADC-535769B7C4A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
