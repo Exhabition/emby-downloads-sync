@@ -17,11 +17,11 @@ public class SyncServiceTests
 	
 	public SyncServiceTests()
 	{
-		Environment.SetEnvironmentVariable("EMBY_SERVER_URL", "http://localhost:8096");
-		Environment.SetEnvironmentVariable("EMBY_API_KEY", "api-key");
-		Environment.SetEnvironmentVariable("EMBY_DEVICE_IDS", "1,2");
+		var serverUrl = "http://localhost:8096";
+		var apiKey = "api-key";
+		List<string> deviceIds = ["1", "2"];
 		
-		var testConfig = new Config();
+		var testConfig = new Config(serverUrl, apiKey, deviceIds);
 		var mockDeviceService = new Mock<IDeviceService>();
 
 		var fakeDevices = new QueryResultDevicesDeviceInfo
@@ -54,7 +54,7 @@ public class SyncServiceTests
 	}
 	
 	[Fact]
-	public async Task ValidateDevices_ShouldThrowException_WhenConfiguredDeviceIsMissingOnServer()
+	public void ValidateDevices_ShouldThrowException_WhenConfiguredDeviceIsMissingOnServer()
 	{
 		// Arrange
 		syncService.Config.DeviceIds = ["1", "3"];

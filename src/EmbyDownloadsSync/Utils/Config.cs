@@ -28,4 +28,14 @@ public class Config
 		
 		ApiClient = new ApiClient(ServerUrl, new EmbyApiKeyAuthenticator(ApiKey));
 	}
+
+	public Config(string serverUrl, string apiKey, List<string> deviceIds, int syncInterval = 15)
+	{
+		ServerUrl = serverUrl;
+		ApiKey = apiKey;
+		DeviceIds = deviceIds;
+		SyncInterval = syncInterval;
+		
+		ApiClient = new ApiClient(ServerUrl, new EmbyApiKeyAuthenticator(ApiKey));
+	}
 }
