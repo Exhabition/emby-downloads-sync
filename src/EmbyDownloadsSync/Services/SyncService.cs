@@ -76,14 +76,14 @@ public class SyncService
 		Console.WriteLine("All configured devices are valid.");
 	}
 
-	private async Task SyncAllDevices()
+	public async Task SyncAllDevices()
 	{
 		Console.WriteLine("Starting sync cycle...");
 		var masterDeviceId = Config.DeviceIds.First();
 		var masterDeviceJobs = await _jobService.GetJobsByDeviceId(masterDeviceId);
 		
 		var subDeviceIds = Config.DeviceIds.Skip(1).ToList();
-		var subDeviceJobsList = await GetSubDeviceJobs(subDeviceIds);
+		var subDeviceJobsMap = await GetSubDeviceJobs(subDeviceIds);
 
 		foreach (var masterDeviceJob in masterDeviceJobs)
 		{
@@ -91,12 +91,14 @@ public class SyncService
 			
 			var masterJobUniqueId = GetJobKey(masterDeviceJob);
 			
-			foreach (var subDeviceJobMap in subDeviceJobsList)
+			foreach (var keyValuePair in subDeviceJobsMap)
 			{
+				var subDeviceId = keyValuePair.Key;
+				var subDeviceJobMap = keyValuePair.Value;
+				
 				if (!subDeviceJobMap.ContainsKey(masterJobUniqueId))
 				{
-					var subDeviceJob = subDeviceJobMap[masterJobUniqueId];
-					HandleMissingJob(masterDeviceJob, subDeviceJob.TargetId);
+					HandleMissingJob(masterDeviceJob, subDeviceId);
 				}
 				else
 				{
@@ -106,30 +108,28 @@ public class SyncService
 		}
 	}
 	
-	private async Task<List<Dictionary<string, SyncJob>>> GetSubDeviceJobs(IEnumerable<string> subDeviceIds)
+	private async Task<Dictionary<string, Dictionary<string, SyncJob>>> GetSubDeviceJobs(IEnumerable<string> subDeviceIds)
 	{
-		var subDeviceJobsList = new List<Dictionary<string, SyncJob>>();
+		var result = new Dictionary<string, Dictionary<string, SyncJob>>();
 
 		foreach (var subDeviceId in subDeviceIds)
 		{
 			var subDeviceJobs = await _jobService.GetJobsByDeviceId(subDeviceId);
-			var subDeviceJobsDict = subDeviceJobs.ToDictionary(
-				job => GetJobKey(job), job => job);
-
-			subDeviceJobsList.Add(subDeviceJobsDict);
+			var subDeviceJobsDict = subDeviceJobs.ToDictionary(job => GetJobKey(job), job => job);
+			result[subDeviceId] = subDeviceJobsDict;
 		}
 
-		return subDeviceJobsList;
+		return result;
 	}
 	
 	internal string GetJobKey(SyncJob job) => $"{job.Name}_{job.RequestedItemIds}";
 	
-	internal void HandleExistingJob(SyncJob masterJob)
+	protected virtual void HandleExistingJob(SyncJob masterJob)
 	{
 		Console.WriteLine("Job already exists, skipping...");
 	}
 	
-	internal void HandleMissingJob(SyncJob masterJob, string targetId)
+	protected virtual void HandleMissingJob(SyncJob masterJob, string targetId)
 	{
 		Console.WriteLine($"Found missing job on {targetId} , creating...");
 		Console.WriteLine($"Name: {masterJob.Name}");
