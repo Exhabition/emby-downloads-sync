@@ -122,7 +122,7 @@ public class SyncService
 		return result;
 	}
 	
-	internal string GetJobKey(SyncJob job) => $"{job.Name}_{job.RequestedItemIds}";
+	protected string GetJobKey(SyncJob job) => $"{job.Name}_{string.Join(",", job.RequestedItemIds)}";
 	
 	protected virtual void HandleExistingJob(SyncJob masterJob)
 	{
