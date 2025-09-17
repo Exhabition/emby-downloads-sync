@@ -20,10 +20,10 @@ public class SyncServiceTestDouble : SyncService
 		: base(config, deviceService, jobService) { }
 
 	protected override void HandleExistingJob(SyncJob masterJob) 
-		=> ExistingJobs.Add(masterJob.Name);
+		=> ExistingJobs.Add(GetJobKey(masterJob));
 
 	protected override void HandleMissingJob(SyncJob masterJob, string targetId) 
-		=> MissingJobs.Add($"{masterJob.Name}:{targetId}");
+		=> MissingJobs.Add(GetJobKey(masterJob));
 }
 
 public class SyncServiceTests
@@ -101,6 +101,30 @@ public class SyncServiceTests
 		await service.SyncAllDevices();
 
 		// Assert
-		Assert.Contains("Movie:sub", service.MissingJobs);
+		Assert.Contains("Movie_124904,193414", service.MissingJobs);
+	}
+	
+	[Fact]
+	public async Task SyncAllDevices_ShouldMarkIgnoreExistingJobs()
+	{
+		// Arrange
+		var config = new Config(
+			"http://localhost:8096", 
+			"api-key",
+			new List<string> { "master", "sub" });
+
+		var mockJobService = new Mock<IJobService>();
+		mockJobService.Setup(s => s.GetJobsByDeviceId("master"))
+			.ReturnsAsync(new List<SyncJob> { new SyncJob { Name = "Movie", RequestedItemIds = new List<long?>() { 124904L, 193414L } } });
+		mockJobService.Setup(s => s.GetJobsByDeviceId("sub"))
+			.ReturnsAsync(new List<SyncJob> { new SyncJob { Name = "Movie", RequestedItemIds = new List<long?>() { 124904L, 193414L } } });
+
+		var service = new SyncServiceTestDouble(config, Mock.Of<IDeviceService>(), mockJobService.Object);
+
+		// Act
+		await service.SyncAllDevices();
+
+		// Assert
+		Assert.Contains("Movie_124904,193414", service.ExistingJobs);
 	}
 }
