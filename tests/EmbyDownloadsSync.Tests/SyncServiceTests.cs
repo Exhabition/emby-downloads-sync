@@ -13,38 +13,41 @@ namespace EmbyDownloadsSync.Tests;
 
 public class SyncServiceTestDouble : SyncService
 {
-	public List<string> MissingJobs = new();
-	public List<string> ExistingJobs = new();
-	public List<string> FailedJobs = new();
+	public readonly List<string> MissingJobs = [];
+	public readonly List<string> ExistingJobs = [];
+	public readonly List<string> FailedJobs = [];
 
 	public SyncServiceTestDouble(Config config, IDeviceService deviceService, IJobService jobService)
-		: base(config, deviceService, jobService) { }
+		: base(config, deviceService, jobService)
+	{
+	}
 
-	protected override void HandleExistingJob(SyncJob masterJob) 
+	protected override void HandleExistingJob(SyncJob masterJob)
 		=> ExistingJobs.Add(GetJobKey(masterJob));
 
-	protected override void HandleMissingJob(SyncJob masterJob, string targetId) 
+	protected override void HandleMissingJob(SyncJob masterJob, string targetId)
 		=> MissingJobs.Add(GetJobKey(masterJob));
-	
+
 	protected override void HandleFailedJob(SyncJob masterJob) => FailedJobs.Add(GetJobKey(masterJob));
 }
 
 public class SyncServiceTests
 {
 	private readonly SyncService _syncService;
-	
+
 	public SyncServiceTests()
 	{
 		const string serverUrl = "http://localhost:8096";
 		const string apiKey = "api-key";
 		List<string> deviceIds = ["1", "2"];
-		
+
 		var testConfig = new Config(serverUrl, apiKey, deviceIds);
 		var mockDeviceService = new Mock<IDeviceService>();
 
 		var fakeDevices = new QueryResultDevicesDeviceInfo
 		{
-			Items = [
+			Items =
+			[
 				new DevicesDeviceInfo { ReportedDeviceId = "1", Name = "Test Device 1" },
 				new DevicesDeviceInfo { ReportedDeviceId = "2", Name = "Test Device 2" }
 			]
@@ -53,23 +56,23 @@ public class SyncServiceTests
 		mockDeviceService.Setup(service => service.GetDevicesAsync())
 			.ReturnsAsync(fakeDevices)
 			.Verifiable();
-		
+
 		_syncService = new SyncService(testConfig, deviceService: mockDeviceService.Object);
 	}
-	
+
 	[Fact]
 	public void ValidateDevices_ShouldAccept_WhenAllConfiguredDevicesExistOnServer()
 	{
 		// Arrange
 		_syncService.Config.DeviceIds = ["1", "2"];
-		
+
 		// Act
 		var validateAct = async () => await _syncService.ValidateDevices();
 
 		// Assert
 		Assert.True(validateAct.Invoke().IsCompletedSuccessfully);
 	}
-	
+
 	[Fact]
 	public void ValidateDevices_ShouldThrowException_WhenConfiguredDeviceIsMissingOnServer()
 	{
@@ -82,21 +85,21 @@ public class SyncServiceTests
 		// Assert
 		Assert.True(validateAct.Invoke().IsFaulted);
 	}
-	
+
 	[Fact]
 	public async Task SyncAllDevices_ShouldMarkMissingJobs()
 	{
 		// Arrange
 		var config = new Config(
-			"http://localhost:8096", 
+			"http://localhost:8096",
 			"api-key",
-			new List<string> { "master", "sub" });
+			["master", "sub"]);
 
 		var mockJobService = new Mock<IJobService>();
 		mockJobService.Setup(s => s.GetJobsByDeviceId("master"))
-			.ReturnsAsync(new List<SyncJob> { new SyncJob { Name = "Movie", RequestedItemIds = new List<long?>() { 124904L, 193414L } } });
+			.ReturnsAsync([new SyncJob { Name = "Movie", RequestedItemIds = [124904L, 193414L] }]);
 		mockJobService.Setup(s => s.GetJobsByDeviceId("sub"))
-			.ReturnsAsync(new List<SyncJob>());
+			.ReturnsAsync([]);
 
 		var service = new SyncServiceTestDouble(config, Mock.Of<IDeviceService>(), mockJobService.Object);
 
@@ -106,21 +109,21 @@ public class SyncServiceTests
 		// Assert
 		Assert.Contains("Movie_124904,193414", service.MissingJobs);
 	}
-	
+
 	[Fact]
 	public async Task SyncAllDevices_ShouldMarkExistingJobs()
 	{
 		// Arrange
 		var config = new Config(
-			"http://localhost:8096", 
+			"http://localhost:8096",
 			"api-key",
-			new List<string> { "master", "sub" });
+			["master", "sub"]);
 
 		var mockJobService = new Mock<IJobService>();
 		mockJobService.Setup(s => s.GetJobsByDeviceId("master"))
-			.ReturnsAsync(new List<SyncJob> { new SyncJob { Name = "Movie", RequestedItemIds = new List<long?>() { 124904L, 193414L } } });
+			.ReturnsAsync([new SyncJob { Name = "Movie", RequestedItemIds = [124904L, 193414L] }]);
 		mockJobService.Setup(s => s.GetJobsByDeviceId("sub"))
-			.ReturnsAsync(new List<SyncJob> { new SyncJob { Name = "Movie", RequestedItemIds = new List<long?>() { 124904L, 193414L } } });
+			.ReturnsAsync([new SyncJob { Name = "Movie", RequestedItemIds = [124904L, 193414L] }]);
 
 		var service = new SyncServiceTestDouble(config, Mock.Of<IDeviceService>(), mockJobService.Object);
 
@@ -130,24 +133,26 @@ public class SyncServiceTests
 		// Assert
 		Assert.Contains("Movie_124904,193414", service.ExistingJobs);
 	}
-	
+
 	[Fact]
 	public async Task SyncAllDevices_ShouldIgnoreFailedJobs()
 	{
 		// Arrange
 		var config = new Config(
-			"http://localhost:8096", 
+			"http://localhost:8096",
 			"api-key",
-			new List<string> { "master", "sub" });
+			["master", "sub"]);
 
 		var mockJobService = new Mock<IJobService>();
 		mockJobService.Setup(s => s.GetJobsByDeviceId("master"))
-			.ReturnsAsync(new List<SyncJob> { new SyncJob
-			{
-				Name = "Movie", RequestedItemIds = new List<long?>() { 124904L, 193414L }, Status = SyncJobStatus.Failed
-			} });
+			.ReturnsAsync([
+				new SyncJob
+				{
+					Name = "Movie", RequestedItemIds = [124904L, 193414L], Status = SyncJobStatus.Failed
+				}
+			]);
 		mockJobService.Setup(s => s.GetJobsByDeviceId("sub"))
-			.ReturnsAsync(new List<SyncJob>());
+			.ReturnsAsync([]);
 
 		var service = new SyncServiceTestDouble(config, Mock.Of<IDeviceService>(), mockJobService.Object);
 
