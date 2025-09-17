@@ -25,7 +25,7 @@ public class SyncServiceTestDouble : SyncService
 	protected override void HandleExistingJob(SyncJob masterJob)
 		=> ExistingJobs.Add(GetJobKey(masterJob));
 
-	protected override void HandleMissingJob(SyncJob masterJob, string targetId)
+	protected override async Task HandleMissingJob(SyncJob masterJob, string targetId)
 		=> MissingJobs.Add(GetJobKey(masterJob));
 
 	protected override void HandleFailedJob(SyncJob masterJob) => FailedJobs.Add(GetJobKey(masterJob));

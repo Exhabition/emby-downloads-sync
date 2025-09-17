@@ -102,7 +102,7 @@ public class SyncService
 				
 				if (!subDeviceJobMap.ContainsKey(masterJobUniqueId))
 				{
-					HandleMissingJob(masterDeviceJob, subDeviceId);
+					await HandleMissingJob(masterDeviceJob, subDeviceId);
 				}
 				else
 				{
@@ -138,7 +138,7 @@ public class SyncService
 		Console.WriteLine("Job already exists, skipping...");
 	}
 	
-	protected virtual void HandleMissingJob(SyncJob masterJob, string targetId)
+	protected virtual async Task HandleMissingJob(SyncJob masterJob, string targetId)
 	{
 		Console.WriteLine($"Found missing job on {targetId} , creating...");
 		Console.WriteLine($"Name: {masterJob.Name}");
@@ -146,5 +146,14 @@ public class SyncService
 		Console.WriteLine($" - SyncNewContent: {masterJob.SyncNewContent}");
 		Console.WriteLine($" - ItemCount: {masterJob.ItemCount}");
 		Console.WriteLine($" - RequestedItemIds: {masterJob.RequestedItemIds.ToString()}");
+
+		try
+		{
+			await _jobService.CreateDuplicateJob(masterJob, targetId);
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine($"Failed to create job on target device {targetId}: {e.Message}");
+		}
 	}
 }

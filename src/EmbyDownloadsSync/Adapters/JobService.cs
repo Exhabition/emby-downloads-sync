@@ -1,5 +1,7 @@
 ﻿using Emby.ApiClient.Api;
 using Emby.ApiClient.Model;
+using RestSharp;
+using ServiceStack;
 
 namespace EmbyDownloadsSync.Adapters;
 
@@ -27,7 +29,24 @@ public class JobService : IJobService
 		var response = await _api.GetSyncJobs();
 
 		if (!response.IsSuccessful || response.Data == null)
-			throw new Exception("Failed to fetch devices from Emby");
+			throw new Exception("Failed to fetch jobs from Emby");
+
+		return response.Data;
+	}
+
+	public virtual async Task<SyncJobCreationResult> CreateDuplicateJob(SyncJob jobToCopy, string targetId)
+	{
+		var copyJob = new SyncJobRequestFix(jobToCopy, targetId);
+		var restRequest = new RestRequest("/Sync/Jobs", Method.Post)
+			.AddJsonBody(copyJob); 
+		
+		var response = await _api.ApiClient.RestClient.ExecuteAsync<SyncJobCreationResult>(restRequest);
+		
+		if (!response.IsSuccessful || response.Data == null)
+			throw new Exception("Failed create sync job at Emby server");
+		
+		Console.WriteLine(copyJob.ItemIds);
+		Console.WriteLine(response.Data.Job.RequestedItemIds);
 
 		return response.Data;
 	}
