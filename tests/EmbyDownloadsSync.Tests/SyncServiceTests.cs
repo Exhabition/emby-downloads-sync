@@ -127,4 +127,32 @@ public class SyncServiceTests
 		// Assert
 		Assert.Contains("Movie_124904,193414", service.ExistingJobs);
 	}
+	
+	[Fact]
+	public async Task SyncAllDevices_ShouldIgnoreFailedJobs()
+	{
+		// Arrange
+		var config = new Config(
+			"http://localhost:8096", 
+			"api-key",
+			new List<string> { "master", "sub" });
+
+		var mockJobService = new Mock<IJobService>();
+		mockJobService.Setup(s => s.GetJobsByDeviceId("master"))
+			.ReturnsAsync(new List<SyncJob> { new SyncJob
+			{
+				Name = "Movie", RequestedItemIds = new List<long?>() { 124904L, 193414L }, Status = SyncJobStatus.Failed
+			} });
+		mockJobService.Setup(s => s.GetJobsByDeviceId("sub"))
+			.ReturnsAsync(new List<SyncJob>());
+
+		var service = new SyncServiceTestDouble(config, Mock.Of<IDeviceService>(), mockJobService.Object);
+
+		// Act
+		await service.SyncAllDevices();
+
+		// Assert
+		Assert.DoesNotContain("Movie_124904,193414", service.ExistingJobs);
+		Assert.DoesNotContain("Movie_124904,193414", service.MissingJobs);
+	}
 }
