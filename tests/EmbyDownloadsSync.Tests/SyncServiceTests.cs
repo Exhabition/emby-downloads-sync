@@ -27,8 +27,8 @@ public class SyncServiceTests
 		var fakeDevices = new QueryResultDevicesDeviceInfo
 		{
 			Items = [
-				new DevicesDeviceInfo { Id = "1", Name = "Test Device 1" },
-				new DevicesDeviceInfo { Id = "2", Name = "Test Device 2" }
+				new DevicesDeviceInfo { ReportedDeviceId = "1", Name = "Test Device 1" },
+				new DevicesDeviceInfo { ReportedDeviceId = "2", Name = "Test Device 2" }
 			]
 		};
 
