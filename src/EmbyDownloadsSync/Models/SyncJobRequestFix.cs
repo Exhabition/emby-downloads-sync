@@ -31,7 +31,7 @@ public class SyncJobRequestFix
 		// Behavioral flags
 		UnwatchedOnly = syncJob.UnwatchedOnly;
 		SyncNewContent = syncJob.SyncNewContent;
-		Downloaded = true;
+		Downloaded = false;
 		ItemLimit = syncJob.ItemLimit;
 		Bitrate = syncJob.Bitrate;
 

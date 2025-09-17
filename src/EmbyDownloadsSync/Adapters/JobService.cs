@@ -44,9 +44,6 @@ public class JobService : IJobService
 		
 		if (!response.IsSuccessful || response.Data == null)
 			throw new Exception("Failed create sync job at Emby server");
-		
-		Console.WriteLine(copyJob.ItemIds);
-		Console.WriteLine(response.Data.Job.RequestedItemIds);
 
 		return response.Data;
 	}
