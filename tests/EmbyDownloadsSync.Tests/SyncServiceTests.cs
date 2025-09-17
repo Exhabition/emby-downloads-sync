@@ -108,7 +108,7 @@ public class SyncServiceTests
 	}
 	
 	[Fact]
-	public async Task SyncAllDevices_ShouldMarkIgnoreExistingJobs()
+	public async Task SyncAllDevices_ShouldMarkExistingJobs()
 	{
 		// Arrange
 		var config = new Config(
