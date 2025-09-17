@@ -87,7 +87,11 @@ public class SyncService
 
 		foreach (var masterDeviceJob in masterDeviceJobs)
 		{
-			if (masterDeviceJob.Status == SyncJobStatus.Failed) continue;
+			if (masterDeviceJob.Status == SyncJobStatus.Failed)
+			{
+				HandleFailedJob(masterDeviceJob);
+				continue;
+			};
 			
 			var masterJobUniqueId = GetJobKey(masterDeviceJob);
 			
@@ -123,6 +127,11 @@ public class SyncService
 	}
 	
 	protected string GetJobKey(SyncJob job) => $"{job.Name}_{string.Join(",", job.RequestedItemIds)}";
+	
+	protected virtual void HandleFailedJob(SyncJob masterJob)
+	{
+		Console.WriteLine("Job is in failed state, skipping...");
+	}
 	
 	protected virtual void HandleExistingJob(SyncJob masterJob)
 	{

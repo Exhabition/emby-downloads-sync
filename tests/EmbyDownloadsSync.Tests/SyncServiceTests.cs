@@ -15,6 +15,7 @@ public class SyncServiceTestDouble : SyncService
 {
 	public List<string> MissingJobs = new();
 	public List<string> ExistingJobs = new();
+	public List<string> FailedJobs = new();
 
 	public SyncServiceTestDouble(Config config, IDeviceService deviceService, IJobService jobService)
 		: base(config, deviceService, jobService) { }
@@ -24,6 +25,8 @@ public class SyncServiceTestDouble : SyncService
 
 	protected override void HandleMissingJob(SyncJob masterJob, string targetId) 
 		=> MissingJobs.Add(GetJobKey(masterJob));
+	
+	protected override void HandleFailedJob(SyncJob masterJob) => FailedJobs.Add(GetJobKey(masterJob));
 }
 
 public class SyncServiceTests
@@ -152,7 +155,6 @@ public class SyncServiceTests
 		await service.SyncAllDevices();
 
 		// Assert
-		Assert.DoesNotContain("Movie_124904,193414", service.ExistingJobs);
-		Assert.DoesNotContain("Movie_124904,193414", service.MissingJobs);
+		Assert.Contains("Movie_124904,193414", service.FailedJobs);
 	}
 }
