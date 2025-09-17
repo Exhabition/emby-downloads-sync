@@ -83,40 +83,59 @@ public class SyncService
 		var masterDeviceJobs = await _jobService.GetJobsByDeviceId(masterDeviceId);
 		
 		var subDeviceIds = Config.DeviceIds.Skip(1).ToList();
-		List<Dictionary<string,SyncJob>> subDeviceJobsList = new List<Dictionary<string, SyncJob>>();
+		var subDeviceJobsList = await GetSubDeviceJobs(subDeviceIds);
+
+		foreach (var masterDeviceJob in masterDeviceJobs)
+		{
+			if (masterDeviceJob.Status == SyncJobStatus.Failed) continue;
+			
+			var masterJobUniqueId = GetJobKey(masterDeviceJob);
+			
+			foreach (var subDeviceJobMap in subDeviceJobsList)
+			{
+				if (!subDeviceJobMap.ContainsKey(masterJobUniqueId))
+				{
+					var subDeviceJob = subDeviceJobMap[masterJobUniqueId];
+					HandleMissingJob(masterDeviceJob, subDeviceJob.TargetId);
+				}
+				else
+				{
+					HandleExistingJob(masterDeviceJob);
+				}
+			}
+		}
+	}
+	
+	private async Task<List<Dictionary<string, SyncJob>>> GetSubDeviceJobs(IEnumerable<string> subDeviceIds)
+	{
+		var subDeviceJobsList = new List<Dictionary<string, SyncJob>>();
 
 		foreach (var subDeviceId in subDeviceIds)
 		{
 			var subDeviceJobs = await _jobService.GetJobsByDeviceId(subDeviceId);
 			var subDeviceJobsDict = subDeviceJobs.ToDictionary(
-				job => $"{job.Name}_{job.RequestedItemIds}", job => job);
-			
+				job => GetJobKey(job), job => job);
+
 			subDeviceJobsList.Add(subDeviceJobsDict);
 		}
 
-		foreach (var masterDeviceJob in masterDeviceJobs)
-		{
-			if (masterDeviceJob.Status == SyncJobStatus.Failed) continue;
-			var masterJobUniqueId = $"{masterDeviceJob.Name}_{masterDeviceJob.RequestedItemIds}";
-			
-			foreach (var subDeviceJob in subDeviceJobsList)
-			{
-				// Ignore faulty downloads
-				if (!subDeviceJob.ContainsKey(masterJobUniqueId))
-				{
-					// TODO fix way getting subDeviceId
-					Console.WriteLine($"Found missing job on {subDeviceJob.First().Value.TargetId} , creating...");
-					Console.WriteLine($"Name: {masterDeviceJob.Name}");
-					Console.WriteLine($" - UnwatchedOnly: {masterDeviceJob.UnwatchedOnly}");
-					Console.WriteLine($" - SyncNewContent: {masterDeviceJob.SyncNewContent}");
-					Console.WriteLine($" - ItemCount: {masterDeviceJob.ItemCount}");
-					Console.WriteLine($" - RequestedItemIds: {masterDeviceJob.RequestedItemIds.ToString()}");
-				}
-				else
-				{
-					Console.WriteLine("Job already exists, skipping...");
-				}
-			}
-		}
+		return subDeviceJobsList;
+	}
+	
+	internal string GetJobKey(SyncJob job) => $"{job.Name}_{job.RequestedItemIds}";
+	
+	internal void HandleExistingJob(SyncJob masterJob)
+	{
+		Console.WriteLine("Job already exists, skipping...");
+	}
+	
+	internal void HandleMissingJob(SyncJob masterJob, string targetId)
+	{
+		Console.WriteLine($"Found missing job on {targetId} , creating...");
+		Console.WriteLine($"Name: {masterJob.Name}");
+		Console.WriteLine($" - UnwatchedOnly: {masterJob.UnwatchedOnly}");
+		Console.WriteLine($" - SyncNewContent: {masterJob.SyncNewContent}");
+		Console.WriteLine($" - ItemCount: {masterJob.ItemCount}");
+		Console.WriteLine($" - RequestedItemIds: {masterJob.RequestedItemIds.ToString()}");
 	}
 }
