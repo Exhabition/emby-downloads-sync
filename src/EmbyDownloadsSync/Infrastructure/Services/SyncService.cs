@@ -1,13 +1,11 @@
 ﻿using Emby.ApiClient.Api;
-using Emby.ApiClient.Client;
-using Emby.ApiClient.Client.Authentication;
 using Emby.ApiClient.Model;
-using EmbyDownloadsSync.Adapters;
-using EmbyDownloadsSync.Utils;
+using EmbyDownloadsSync.Configuration;
+using EmbyDownloadsSync.Infrastructure;
 
 namespace EmbyDownloadsSync.Services;
 
-public class SyncService
+public class SyncService : ISyncService
 {
 	public readonly Config Config;
 	private readonly IDeviceService _deviceService;
@@ -81,7 +79,7 @@ public class SyncService
 		Console.WriteLine("Starting sync cycle...");
 		var masterDeviceId = Config.DeviceIds.First();
 		var masterDeviceJobs = await _jobService.GetJobsByDeviceId(masterDeviceId);
-		
+
 		var subDeviceIds = Config.DeviceIds.Skip(1).ToList();
 		var subDeviceJobsMap = await GetSubDeviceJobs(subDeviceIds);
 
@@ -91,15 +89,16 @@ public class SyncService
 			{
 				HandleFailedJob(masterDeviceJob);
 				continue;
-			};
-			
+			}
+			;
+
 			var masterJobUniqueId = GetJobKey(masterDeviceJob);
-			
+
 			foreach (var keyValuePair in subDeviceJobsMap)
 			{
 				var subDeviceId = keyValuePair.Key;
 				var subDeviceJobMap = keyValuePair.Value;
-				
+
 				if (!subDeviceJobMap.ContainsKey(masterJobUniqueId))
 				{
 					await HandleMissingJob(masterDeviceJob, subDeviceId);
@@ -111,7 +110,7 @@ public class SyncService
 			}
 		}
 	}
-	
+
 	private async Task<Dictionary<string, Dictionary<string, SyncJob>>> GetSubDeviceJobs(IEnumerable<string> subDeviceIds)
 	{
 		var result = new Dictionary<string, Dictionary<string, SyncJob>>();
@@ -125,19 +124,19 @@ public class SyncService
 
 		return result;
 	}
-	
+
 	protected string GetJobKey(SyncJob job) => $"{job.Name}_{string.Join(",", job.RequestedItemIds)}";
-	
+
 	protected virtual void HandleFailedJob(SyncJob masterJob)
 	{
 		Console.WriteLine("Job is in failed state, skipping...");
 	}
-	
+
 	protected virtual void HandleExistingJob(SyncJob masterJob)
 	{
 		Console.WriteLine("Job already exists, skipping...");
 	}
-	
+
 	protected virtual async Task HandleMissingJob(SyncJob masterJob, string targetId)
 	{
 		Console.WriteLine($"Found missing job on {targetId} , creating...");
