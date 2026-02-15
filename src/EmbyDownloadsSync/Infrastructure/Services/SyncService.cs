@@ -1,19 +1,24 @@
 ﻿using Emby.ApiClient.Model;
 using EmbyDownloadsSync.Application.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace EmbyDownloadsSync.Infrastructure.Services;
 
-public class SyncService(EmbySettings settings, IDeviceService deviceService, IJobService jobService) : ISyncService
+public partial class SyncService(
+	EmbySettings settings,
+	IDeviceService deviceService,
+	IJobService jobService,
+	ILogger<SyncService> logger) : ISyncService
 {
-	public EmbySettings Settings { get; } = settings;
-
-	public async Task RunAsync()
+	public async Task RunAsync(CancellationToken cancellationToken = default)
 	{
-		Console.WriteLine("Starting Emby download sync...");
+		LogStartingSync(logger);
 
 		await ValidateDevices();
 
-		while (true)
+		using var timer = new PeriodicTimer(TimeSpan.FromMinutes(settings.SyncIntervalMinutes));
+
+		do
 		{
 			try
 			{
@@ -21,125 +26,108 @@ public class SyncService(EmbySettings settings, IDeviceService deviceService, IJ
 			}
 			catch (Exception ex)
 			{
-				Console.WriteLine($"Error during sync: {ex.Message}");
+				LogSyncError(logger, ex);
 			}
-
-			await Task.Delay(Settings.SyncIntervalMinutes * 1000 * 60);
-		}
+		} while (await timer.WaitForNextTickAsync(cancellationToken));
 	}
 
 	public async Task ValidateDevices()
 	{
-		Console.WriteLine("Validating devices ...");
+		LogValidatingDevices(logger);
+
 		var allDevices = await deviceService.GetDevicesAsync();
-
-		var foundDevices = new HashSet<string>();
-
-		foreach (var device in allDevices.Items)
-		{
-			if (Settings.DeviceIds.Contains(device.ReportedDeviceId))
+		var foundDeviceIds = allDevices.Items
+			.Where(device => settings.DeviceIds.Contains(device.ReportedDeviceId))
+			.Select(device =>
 			{
-				foundDevices.Add(device.ReportedDeviceId);
-				Console.WriteLine(
-					$"Found Device: Id: {device.ReportedDeviceId} | Name: {device.Name} | Last Used: {device.DateLastActivity}");
-			}
-		}
+				LogFoundDevice(logger, device.ReportedDeviceId, device.Name, device.DateLastActivity);
+				return device.ReportedDeviceId;
+			})
+			.ToHashSet();
 
-		var missingDevices = Settings.DeviceIds.Except(foundDevices).ToList();
+		var missingDevices = settings.DeviceIds.Except(foundDeviceIds).ToList();
 
 		if (missingDevices.Count > 0)
 		{
-			Console.WriteLine("Missing devices:");
 			foreach (var id in missingDevices)
 			{
-				Console.WriteLine($" - {id}");
+				LogMissingDevice(logger, id);
 			}
 
-			throw new ArgumentException(
-				"One or more configured device IDs are invalid. See above for missing devices.");
+			throw new InvalidOperationException(
+				$"One or more configured device IDs are invalid: {string.Join(", ", missingDevices)}");
 		}
 
-		Console.WriteLine("All configured devices are valid.");
+		LogAllDevicesValid(logger);
 	}
 
 	public async Task SyncAllDevices()
 	{
-		Console.WriteLine("Starting sync cycle...");
-		var masterDeviceId = Settings.DeviceIds.First();
+		LogStartingSyncCycle(logger);
+
+		var masterDeviceId = settings.DeviceIds[0];
 		var masterDeviceJobs = await jobService.GetJobsByDeviceId(masterDeviceId);
+		var subDeviceIds = settings.DeviceIds.Skip(1).ToList();
+		var subDeviceJobsMap = await GetTargetDeviceJobsAsync(subDeviceIds);
 
-		var subDeviceIds = Settings.DeviceIds.Skip(1).ToList();
-		var subDeviceJobsMap = await GetSubDeviceJobs(subDeviceIds);
-
-		foreach (var masterDeviceJob in masterDeviceJobs)
+		foreach (var masterJob in masterDeviceJobs)
 		{
-			if (masterDeviceJob.Status == SyncJobStatus.Failed)
+			if (masterJob.Status == SyncJobStatus.Failed)
 			{
-				HandleFailedJob(masterDeviceJob);
+				await HandleFailedJob(masterJob);
 				continue;
 			}
 
-			var masterJobUniqueId = GetJobKey(masterDeviceJob);
+			var masterJobKey = GetJobKey(masterJob);
 
-			foreach (var keyValuePair in subDeviceJobsMap)
+			foreach (var (subDeviceId, subDeviceJobMap) in subDeviceJobsMap)
 			{
-				var subDeviceId = keyValuePair.Key;
-				var subDeviceJobMap = keyValuePair.Value;
-
-				if (!subDeviceJobMap.ContainsKey(masterJobUniqueId))
+				if (subDeviceJobMap.ContainsKey(masterJobKey))
 				{
-					await HandleMissingJob(masterDeviceJob, subDeviceId);
+					await HandleExistingJob(masterJob);
 				}
 				else
 				{
-					HandleExistingJob(masterDeviceJob);
+					await HandleMissingJob(masterJob, subDeviceId);
 				}
 			}
 		}
 	}
 
-	private async Task<Dictionary<string, Dictionary<string, SyncJob>>> GetSubDeviceJobs(IEnumerable<string> subDeviceIds)
+	private async Task<Dictionary<string, Dictionary<string, SyncJob>>> GetTargetDeviceJobsAsync(
+		IEnumerable<string> targetDeviceIds)
 	{
 		var result = new Dictionary<string, Dictionary<string, SyncJob>>();
 
-		foreach (var subDeviceId in subDeviceIds)
+		foreach (var targetDeviceId in targetDeviceIds)
 		{
-			var subDeviceJobs = await jobService.GetJobsByDeviceId(subDeviceId);
-			var subDeviceJobsDict = subDeviceJobs.ToDictionary(GetJobKey, job => job);
-			result[subDeviceId] = subDeviceJobsDict;
+			var jobs = await jobService.GetJobsByDeviceId(targetDeviceId);
+			result[targetDeviceId] = jobs.ToDictionary(GetJobKey);
 		}
 
 		return result;
 	}
 
-	protected string GetJobKey(SyncJob job) => $"{job.Name}_{string.Join(",", job.RequestedItemIds)}";
+	private static string GetJobKey(SyncJob job) =>
+		$"{job.Name}_{string.Join(",", job.RequestedItemIds)}";
 
-	protected virtual void HandleFailedJob(SyncJob masterJob)
-	{
-		Console.WriteLine("Job is in failed state, skipping...");
-	}
+	private async Task HandleFailedJob(SyncJob masterJob) =>
+		LogJobFailed(logger, masterJob.Name);
 
-	protected virtual void HandleExistingJob(SyncJob masterJob)
-	{
-		Console.WriteLine("Job already exists, skipping...");
-	}
+	private async Task HandleExistingJob(SyncJob masterJob) =>
+		LogJobExists(logger, masterJob.Name);
 
-	protected virtual async Task HandleMissingJob(SyncJob masterJob, string targetId)
+	private async Task HandleMissingJob(SyncJob masterJob, string targetId)
 	{
-		Console.WriteLine($"Found missing job on {targetId} , creating...");
-		Console.WriteLine($"Name: {masterJob.Name}");
-		Console.WriteLine($" - UnwatchedOnly: {masterJob.UnwatchedOnly}");
-		Console.WriteLine($" - SyncNewContent: {masterJob.SyncNewContent}");
-		Console.WriteLine($" - ItemCount: {masterJob.ItemCount}");
-		Console.WriteLine($" - RequestedItemIds: {masterJob.RequestedItemIds}");
+		LogCreatingJob(logger, targetId, masterJob.Name, masterJob.ItemCount, masterJob.UnwatchedOnly);
 
 		try
 		{
 			await jobService.CreateDuplicateJob(masterJob, targetId);
 		}
-		catch (Exception e)
+		catch (Exception ex)
 		{
-			Console.WriteLine($"Failed to create job on target device {targetId}: {e.Message}");
+			LogJobCreationFailed(logger, masterJob.Name, targetId, ex);
 		}
 	}
 }
