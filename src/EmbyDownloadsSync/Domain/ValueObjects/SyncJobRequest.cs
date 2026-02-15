@@ -1,6 +1,6 @@
 using Emby.ApiClient.Model;
 
-namespace EmbyDownloadsSync.Infrastructure;
+namespace EmbyDownloadsSync.Domain.ValueObjects;
 
 public class SyncJobRequest
 {

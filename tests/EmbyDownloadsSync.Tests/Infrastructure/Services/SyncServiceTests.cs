@@ -1,11 +1,10 @@
 ﻿using Emby.ApiClient.Model;
-using EmbyDownloadsSync.Configuration;
-using EmbyDownloadsSync.Infrastructure;
-using EmbyDownloadsSync.Services;
+using EmbyDownloadsSync.Application.Configuration;
+using EmbyDownloadsSync.Infrastructure.Services;
 using EmbyDownloadsSync.Tests.Fakes;
 using Moq;
 
-namespace EmbyDownloadsSync.Tests;
+namespace EmbyDownloadsSync.Tests.Infrastructure.Services;
 
 public class SyncServiceTests
 {

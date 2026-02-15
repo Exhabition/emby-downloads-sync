@@ -1,5 +1,5 @@
-﻿using EmbyDownloadsSync.Configuration;
-using EmbyDownloadsSync.Services;
+﻿using EmbyDownloadsSync.Application.Configuration;
+using EmbyDownloadsSync.Infrastructure.Services;
 
 try
 {

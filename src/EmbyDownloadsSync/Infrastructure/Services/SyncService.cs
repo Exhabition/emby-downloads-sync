@@ -1,9 +1,8 @@
 ﻿using Emby.ApiClient.Api;
 using Emby.ApiClient.Model;
-using EmbyDownloadsSync.Configuration;
-using EmbyDownloadsSync.Infrastructure;
+using EmbyDownloadsSync.Application.Configuration;
 
-namespace EmbyDownloadsSync.Services;
+namespace EmbyDownloadsSync.Infrastructure.Services;
 
 public class SyncService : ISyncService
 {

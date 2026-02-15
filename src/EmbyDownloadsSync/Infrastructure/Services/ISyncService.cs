@@ -1,4 +1,4 @@
-namespace EmbyDownloadsSync.Services;
+namespace EmbyDownloadsSync.Infrastructure.Services;
 
 public interface ISyncService
 {

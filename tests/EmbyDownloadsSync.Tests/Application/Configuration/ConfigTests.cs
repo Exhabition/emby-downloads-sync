@@ -1,6 +1,6 @@
-﻿using EmbyDownloadsSync.Configuration;
+﻿using EmbyDownloadsSync.Application.Configuration;
 
-namespace EmbyDownloadsSync.Tests;
+namespace EmbyDownloadsSync.Tests.Application.Configuration;
 
 public class ConfigTests
 {

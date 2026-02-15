@@ -1,7 +1,7 @@
 using Emby.ApiClient.Client;
 using Emby.ApiClient.Client.Authentication;
 
-namespace EmbyDownloadsSync.Configuration;
+namespace EmbyDownloadsSync.Application.Configuration;
 
 public class Config
 {

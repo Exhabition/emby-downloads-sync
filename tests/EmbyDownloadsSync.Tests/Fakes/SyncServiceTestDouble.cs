@@ -1,7 +1,6 @@
 using Emby.ApiClient.Model;
-using EmbyDownloadsSync.Configuration;
-using EmbyDownloadsSync.Infrastructure;
-using EmbyDownloadsSync.Services;
+using EmbyDownloadsSync.Application.Configuration;
+using EmbyDownloadsSync.Infrastructure.Services;
 
 namespace EmbyDownloadsSync.Tests.Fakes;
 

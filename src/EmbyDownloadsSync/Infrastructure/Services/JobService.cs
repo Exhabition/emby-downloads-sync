@@ -1,8 +1,9 @@
 using Emby.ApiClient.Api;
 using Emby.ApiClient.Model;
 using RestSharp;
+using SyncJobRequest = EmbyDownloadsSync.Domain.ValueObjects.SyncJobRequest;
 
-namespace EmbyDownloadsSync.Infrastructure;
+namespace EmbyDownloadsSync.Infrastructure.Services;
 
 public class JobService : IJobService
 {

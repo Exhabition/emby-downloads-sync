@@ -1,7 +1,7 @@
 using Emby.ApiClient.Api;
 using Emby.ApiClient.Model;
 
-namespace EmbyDownloadsSync.Infrastructure;
+namespace EmbyDownloadsSync.Infrastructure.Services;
 
 public class DeviceService : IDeviceService
 {
