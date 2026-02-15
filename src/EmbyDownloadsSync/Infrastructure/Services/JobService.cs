@@ -1,7 +1,7 @@
 using Emby.ApiClient.Api;
 using Emby.ApiClient.Model;
+using EmbyDownloadsSync.Domain.ValueObjects;
 using RestSharp;
-using SyncJobRequest = EmbyDownloadsSync.Domain.ValueObjects.SyncJobRequest;
 
 namespace EmbyDownloadsSync.Infrastructure.Services;
 
@@ -34,14 +34,11 @@ public class JobService : IJobService
         return response.Data;
     }
 
-    public virtual async Task<SyncJobCreationResult> CreateDuplicateJob(SyncJob jobToCopy, string targetId)
+    public virtual async Task<SyncJobCreationResult> CreateDuplicateJob(SyncJob syncJob, string targetId)
     {
-        var copyJob = new SyncJobRequest(jobToCopy, targetId);
-        var restRequest = new RestRequest("/Sync/Jobs", Method.Post)
-            .AddJsonBody(copyJob);
-
-        // TODO currently this is a workaround because the ApiClient has a bug with PostSyncJobs creating bad ItemIds.
-        var response = await _api.ApiClient.RestClient.ExecuteAsync<SyncJobCreationResult>(restRequest);
+        var syncJobRequest = new SyncJobRequest(targetId, syncJob);
+        
+        var response = await _api.PostSyncJobs(syncJobRequest);
 
         if (!response.IsSuccessful || response.Data == null)
             throw new Exception("Failed create sync job at Emby server");

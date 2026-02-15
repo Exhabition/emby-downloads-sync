@@ -2,7 +2,7 @@ using Emby.ApiClient.Model;
 
 namespace EmbyDownloadsSync.Domain.ValueObjects;
 
-public class SyncJobRequest
+public class SyncJobRequestOld
 {
     public string TargetId { get; set; }
     public string ItemIds { get; set; }
@@ -20,7 +20,7 @@ public class SyncJobRequest
     public string VideoCodec { get; set; }
     public string AudioCodec { get; set; }
 
-    public SyncJobRequest(SyncJob syncJob, string targetId)
+    public SyncJobRequestOld(SyncJob syncJob, string targetId)
     {
         TargetId = targetId;
         ItemIds = syncJob.ItemId.ToString();

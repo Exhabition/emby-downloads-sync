@@ -22,8 +22,27 @@ namespace Emby.ApiClient.Model
         /// <summary>
         /// Initializes a new instance of the <see cref="SyncJobRequest" /> class.
         /// </summary>
-        public SyncJobRequest()
+        public SyncJobRequest(string targetId, SyncJob syncJob)
         {
+            TargetId = targetId;
+            
+            ItemIds = syncJob.ItemId.ToString();
+            Name = syncJob.Name;
+            UserId = syncJob.UserId?.ToString();
+            ParentId = syncJob.ParentId?.ToString();
+
+            // Behavioral flags
+            UnwatchedOnly = syncJob.UnwatchedOnly;
+            SyncNewContent = syncJob.SyncNewContent;
+            Downloaded = false;
+            ItemLimit = syncJob.ItemLimit;
+            Bitrate = syncJob.Bitrate;
+
+            Quality = syncJob.Quality;
+            Profile = syncJob.Profile;
+            Container = syncJob.Container;
+            VideoCodec = syncJob.VideoCodec;
+            AudioCodec = syncJob.AudioCodec;
         }
         
         /// <summary>
@@ -36,7 +55,7 @@ namespace Emby.ApiClient.Model
         /// Gets or Sets ItemIds
         /// </summary>
         /// <value>The ItemIds.</value>
-        public List<string> ItemIds { get; set; }
+        public string ItemIds { get; set; }
 
         /// <summary>
         /// Gets or Sets Category
