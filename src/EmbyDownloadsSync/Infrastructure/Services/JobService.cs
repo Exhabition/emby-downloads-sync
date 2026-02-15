@@ -1,48 +1,51 @@
 using Emby.ApiClient.Api;
 using Emby.ApiClient.Model;
-using EmbyDownloadsSync.Domain.ValueObjects;
-using RestSharp;
+using EmbyDownloadsSync.Domain.Exceptions;
 
 namespace EmbyDownloadsSync.Infrastructure.Services;
 
-public class JobService : IJobService
+public class JobService(ISyncServiceApi syncServiceApi) : IJobService
 {
-    private readonly SyncServiceApi _api;
+	public async Task<List<SyncJob>> GetJobsByDeviceId(string deviceId)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(deviceId);
 
-    public JobService(SyncServiceApi api)
-    {
-        _api = api;
-    }
+		var allJobs = await GetJobs();
+		var deviceJobs = allJobs.Items?
+			.Where(job => job.TargetId == deviceId)
+			.ToList() ?? [];
 
-    public virtual async Task<List<SyncJob>> GetJobsByDeviceId(string deviceId)
-    {
-        var allJobs = await GetJobs();
+		return deviceJobs;
+	}
 
-        // TODO TargetId != DeviceId
-        var deviceJobs = allJobs.Items.Where(job => job.TargetId == deviceId).ToList();
+	public async Task<QueryResultSyncJob> GetJobs()
+	{
+		var response = await syncServiceApi.GetSyncJobs();
 
-        return deviceJobs;
-    }
+		if (!response.IsSuccessful)
+		{
+			throw new EmbyApiException($"Failed to fetch sync jobs from Emby. " +
+			                           $"Status: {response.StatusCode}, Error: {response.ErrorMessage}");
+		}
 
-    public virtual async Task<QueryResultSyncJob> GetJobs()
-    {
-        var response = await _api.GetSyncJobs();
+		return response.Data ??
+		       throw new EmbyApiException("Emby returned a successful response but sync jobs data was null");
+	}
 
-        if (!response.IsSuccessful || response.Data == null)
-            throw new Exception("Failed to fetch jobs from Emby");
+	public async Task<SyncJobCreationResult> CreateDuplicateJob(SyncJob syncJob, string targetId)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(targetId);
 
-        return response.Data;
-    }
+		var syncJobRequest = new SyncJobRequest(targetId, syncJob);
+		var response = await syncServiceApi.PostSyncJobs(syncJobRequest);
 
-    public virtual async Task<SyncJobCreationResult> CreateDuplicateJob(SyncJob syncJob, string targetId)
-    {
-        var syncJobRequest = new SyncJobRequest(targetId, syncJob);
-        
-        var response = await _api.PostSyncJobs(syncJobRequest);
+		if (!response.IsSuccessful)
+		{
+			throw new EmbyApiException($"Failed to create sync job at Emby. " +
+			                           $"Status: {response.StatusCode}, Error: {response.ErrorMessage}");
+		}
 
-        if (!response.IsSuccessful || response.Data == null)
-            throw new Exception("Failed create sync job at Emby server");
-
-        return response.Data;
-    }
+		return response.Data ??
+		       throw new EmbyApiException("Emby returned a successful response but created sync job data was null");
+	}
 }

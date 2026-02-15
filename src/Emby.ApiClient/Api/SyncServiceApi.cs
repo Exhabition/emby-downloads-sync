@@ -16,7 +16,7 @@ namespace Emby.ApiClient.Api
     /// <summary>
     /// Provides a collection of service methods to interact with the API endpoints.
     /// </summary>
-    public partial class SyncServiceApi : IApiAccessor
+    public partial class SyncServiceApi : IApiAccessor, ISyncServiceApi
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SyncServiceApi"/> class.
