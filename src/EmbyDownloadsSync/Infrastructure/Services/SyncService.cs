@@ -1,23 +1,12 @@
-﻿using Emby.ApiClient.Api;
-using Emby.ApiClient.Model;
+﻿using Emby.ApiClient.Model;
 using EmbyDownloadsSync.Application.Configuration;
 
 namespace EmbyDownloadsSync.Infrastructure.Services;
 
-public class SyncService : ISyncService
+public class SyncService(EmbySettings settings, IDeviceService deviceService, IJobService jobService) : ISyncService
 {
-	public readonly Config Config;
-	private readonly IDeviceService _deviceService;
-	private readonly IJobService _jobService;
+	public EmbySettings Settings { get; } = settings;
 
-	public SyncService(Config config, IDeviceService deviceService = null, IJobService jobService = null)
-	{
-		Config = config;
-		_deviceService = deviceService ?? new DeviceService(new DeviceServiceApi(Config.ApiClient));
-		_jobService = jobService ?? new JobService(new SyncServiceApi(Config.ApiClient));
-	}
-
-	// TODO scoped-service
 	public async Task RunAsync()
 	{
 		Console.WriteLine("Starting Emby download sync...");
@@ -35,20 +24,20 @@ public class SyncService : ISyncService
 				Console.WriteLine($"Error during sync: {ex.Message}");
 			}
 
-			await Task.Delay(Config.SyncInterval * 1000 * 60);
+			await Task.Delay(Settings.SyncIntervalMinutes * 1000 * 60);
 		}
 	}
 
 	public async Task ValidateDevices()
 	{
 		Console.WriteLine("Validating devices ...");
-		var allDevices = await _deviceService.GetDevicesAsync();
+		var allDevices = await deviceService.GetDevicesAsync();
 
 		var foundDevices = new HashSet<string>();
 
 		foreach (var device in allDevices.Items)
 		{
-			if (Config.DeviceIds.Contains(device.ReportedDeviceId))
+			if (Settings.DeviceIds.Contains(device.ReportedDeviceId))
 			{
 				foundDevices.Add(device.ReportedDeviceId);
 				Console.WriteLine(
@@ -56,7 +45,7 @@ public class SyncService : ISyncService
 			}
 		}
 
-		var missingDevices = Config.DeviceIds.Except(foundDevices).ToList();
+		var missingDevices = Settings.DeviceIds.Except(foundDevices).ToList();
 
 		if (missingDevices.Count > 0)
 		{
@@ -76,10 +65,10 @@ public class SyncService : ISyncService
 	public async Task SyncAllDevices()
 	{
 		Console.WriteLine("Starting sync cycle...");
-		var masterDeviceId = Config.DeviceIds.First();
-		var masterDeviceJobs = await _jobService.GetJobsByDeviceId(masterDeviceId);
+		var masterDeviceId = Settings.DeviceIds.First();
+		var masterDeviceJobs = await jobService.GetJobsByDeviceId(masterDeviceId);
 
-		var subDeviceIds = Config.DeviceIds.Skip(1).ToList();
+		var subDeviceIds = Settings.DeviceIds.Skip(1).ToList();
 		var subDeviceJobsMap = await GetSubDeviceJobs(subDeviceIds);
 
 		foreach (var masterDeviceJob in masterDeviceJobs)
@@ -89,7 +78,6 @@ public class SyncService : ISyncService
 				HandleFailedJob(masterDeviceJob);
 				continue;
 			}
-			;
 
 			var masterJobUniqueId = GetJobKey(masterDeviceJob);
 
@@ -116,8 +104,8 @@ public class SyncService : ISyncService
 
 		foreach (var subDeviceId in subDeviceIds)
 		{
-			var subDeviceJobs = await _jobService.GetJobsByDeviceId(subDeviceId);
-			var subDeviceJobsDict = subDeviceJobs.ToDictionary(job => GetJobKey(job), job => job);
+			var subDeviceJobs = await jobService.GetJobsByDeviceId(subDeviceId);
+			var subDeviceJobsDict = subDeviceJobs.ToDictionary(GetJobKey, job => job);
 			result[subDeviceId] = subDeviceJobsDict;
 		}
 
@@ -143,11 +131,11 @@ public class SyncService : ISyncService
 		Console.WriteLine($" - UnwatchedOnly: {masterJob.UnwatchedOnly}");
 		Console.WriteLine($" - SyncNewContent: {masterJob.SyncNewContent}");
 		Console.WriteLine($" - ItemCount: {masterJob.ItemCount}");
-		Console.WriteLine($" - RequestedItemIds: {masterJob.RequestedItemIds.ToString()}");
+		Console.WriteLine($" - RequestedItemIds: {masterJob.RequestedItemIds}");
 
 		try
 		{
-			await _jobService.CreateDuplicateJob(masterJob, targetId);
+			await jobService.CreateDuplicateJob(masterJob, targetId);
 		}
 		catch (Exception e)
 		{

@@ -9,14 +9,17 @@ namespace EmbyDownloadsSync.Tests.Infrastructure.Services;
 public class SyncServiceTests
 {
 	private readonly SyncService _syncService;
+	private readonly EmbySettings _settings;
 
 	public SyncServiceTests()
 	{
-		const string serverUrl = "http://localhost:8096";
-		const string apiKey = "api-key";
-		List<string> deviceIds = ["1", "2"];
+		_settings = new EmbySettings
+		{
+			ServerUrl = "http://localhost:8096",
+			ApiKey = "api-key",
+			DeviceIds = ["1", "2"]
+		};
 
-		var testConfig = new Config(serverUrl, apiKey, deviceIds);
 		var mockDeviceService = new Mock<IDeviceService>();
 
 		var fakeDevices = new QueryResultDevicesDeviceInfo
@@ -32,14 +35,14 @@ public class SyncServiceTests
 			.ReturnsAsync(fakeDevices)
 			.Verifiable();
 
-		_syncService = new SyncService(testConfig, deviceService: mockDeviceService.Object);
+		_syncService = new SyncService(_settings, mockDeviceService.Object, Mock.Of<IJobService>());
 	}
 
 	[Fact]
 	public void ValidateDevices_ShouldAccept_WhenAllConfiguredDevicesExistOnServer()
 	{
 		// Arrange
-		_syncService.Config.DeviceIds = ["1", "2"];
+		_settings.DeviceIds = ["1", "2"];
 
 		// Act
 		var validateAct = async () => await _syncService.ValidateDevices();
@@ -52,7 +55,7 @@ public class SyncServiceTests
 	public void ValidateDevices_ShouldThrowException_WhenConfiguredDeviceIsMissingOnServer()
 	{
 		// Arrange
-		_syncService.Config.DeviceIds = ["1", "3"];
+		_settings.DeviceIds = ["1", "3"];
 
 		// Act;
 		var validateAct = async () => await _syncService.ValidateDevices();
@@ -65,10 +68,12 @@ public class SyncServiceTests
 	public async Task SyncAllDevices_ShouldMarkMissingJobs()
 	{
 		// Arrange
-		var config = new Config(
-			"http://localhost:8096",
-			"api-key",
-			["master", "sub"]);
+		var settings = new EmbySettings
+		{
+			ServerUrl = "http://localhost:8096",
+			ApiKey = "api-key",
+			DeviceIds = ["master", "sub"]
+		};
 
 		var mockJobService = new Mock<IJobService>();
 		mockJobService.Setup(s => s.GetJobsByDeviceId("master"))
@@ -76,7 +81,7 @@ public class SyncServiceTests
 		mockJobService.Setup(s => s.GetJobsByDeviceId("sub"))
 			.ReturnsAsync([]);
 
-		var service = new SyncServiceTestDouble(config, Mock.Of<IDeviceService>(), mockJobService.Object);
+		var service = new SyncServiceTestDouble(settings, Mock.Of<IDeviceService>(), mockJobService.Object);
 
 		// Act
 		await service.SyncAllDevices();
@@ -89,10 +94,12 @@ public class SyncServiceTests
 	public async Task SyncAllDevices_ShouldMarkExistingJobs()
 	{
 		// Arrange
-		var config = new Config(
-			"http://localhost:8096",
-			"api-key",
-			["master", "sub"]);
+		var settings = new EmbySettings
+		{
+			ServerUrl = "http://localhost:8096",
+			ApiKey = "api-key",
+			DeviceIds = ["master", "sub"]
+		};
 
 		var mockJobService = new Mock<IJobService>();
 		mockJobService.Setup(s => s.GetJobsByDeviceId("master"))
@@ -100,7 +107,7 @@ public class SyncServiceTests
 		mockJobService.Setup(s => s.GetJobsByDeviceId("sub"))
 			.ReturnsAsync([new SyncJob { Name = "Movie", RequestedItemIds = [124904L, 193414L] }]);
 
-		var service = new SyncServiceTestDouble(config, Mock.Of<IDeviceService>(), mockJobService.Object);
+		var service = new SyncServiceTestDouble(settings, Mock.Of<IDeviceService>(), mockJobService.Object);
 
 		// Act
 		await service.SyncAllDevices();
@@ -113,10 +120,12 @@ public class SyncServiceTests
 	public async Task SyncAllDevices_ShouldIgnoreFailedJobs()
 	{
 		// Arrange
-		var config = new Config(
-			"http://localhost:8096",
-			"api-key",
-			["master", "sub"]);
+		var settings = new EmbySettings
+		{
+			ServerUrl = "http://localhost:8096",
+			ApiKey = "api-key",
+			DeviceIds = ["master", "sub"]
+		};
 
 		var mockJobService = new Mock<IJobService>();
 		mockJobService.Setup(s => s.GetJobsByDeviceId("master"))
@@ -129,7 +138,7 @@ public class SyncServiceTests
 		mockJobService.Setup(s => s.GetJobsByDeviceId("sub"))
 			.ReturnsAsync([]);
 
-		var service = new SyncServiceTestDouble(config, Mock.Of<IDeviceService>(), mockJobService.Object);
+		var service = new SyncServiceTestDouble(settings, Mock.Of<IDeviceService>(), mockJobService.Object);
 
 		// Act
 		await service.SyncAllDevices();

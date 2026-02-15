@@ -10,8 +10,8 @@ public class SyncServiceTestDouble : SyncService
     public readonly List<string> ExistingJobs = [];
     public readonly List<string> FailedJobs = [];
 
-    public SyncServiceTestDouble(Config config, IDeviceService deviceService, IJobService jobService)
-        : base(config, deviceService, jobService)
+    public SyncServiceTestDouble(EmbySettings settings, IDeviceService deviceService, IJobService jobService)
+        : base(settings, deviceService, jobService)
     {
     }
 
