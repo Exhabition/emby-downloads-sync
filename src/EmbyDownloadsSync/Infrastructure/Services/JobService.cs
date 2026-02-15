@@ -39,6 +39,7 @@ public class JobService : IJobService
         var restRequest = new RestRequest("/Sync/Jobs", Method.Post)
             .AddJsonBody(copyJob);
 
+        // TODO currently this is a workaround because the ApiClient has a bug with PostSyncJobs creating bad ItemIds.
         var response = await _api.ApiClient.RestClient.ExecuteAsync<SyncJobCreationResult>(restRequest);
 
         if (!response.IsSuccessful || response.Data == null)
