@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmbyDownloadsSync", "src\Em
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmbyDownloadsSync.Tests", "tests\EmbyDownloadsSync.Tests\EmbyDownloadsSync.Tests.csproj", "{81908F1F-0F5A-4340-AADC-535769B7C4A7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emby.ApiClient", "src\Emby.ApiClient\Emby.ApiClient.csproj", "{EAC47458-6FA2-4F98-9A7F-0B567AAFA415}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{81908F1F-0F5A-4340-AADC-535769B7C4A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81908F1F-0F5A-4340-AADC-535769B7C4A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81908F1F-0F5A-4340-AADC-535769B7C4A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EAC47458-6FA2-4F98-9A7F-0B567AAFA415}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EAC47458-6FA2-4F98-9A7F-0B567AAFA415}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EAC47458-6FA2-4F98-9A7F-0B567AAFA415}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EAC47458-6FA2-4F98-9A7F-0B567AAFA415}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
