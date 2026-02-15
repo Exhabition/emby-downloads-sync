@@ -1,24 +1,19 @@
 using Emby.ApiClient.Api;
 using Emby.ApiClient.Model;
+using EmbyDownloadsSync.Domain.Exceptions;
 
 namespace EmbyDownloadsSync.Infrastructure.Services;
 
-public class DeviceService : IDeviceService
+public class DeviceService(IDeviceServiceApi deviceServiceApi) : IDeviceService
 {
-    private readonly DeviceServiceApi _api;
-
-    public DeviceService(DeviceServiceApi api)
+    public async Task<QueryResultDevicesDeviceInfo> GetDevicesAsync()
     {
-        _api = api;
-    }
+        var response = await deviceServiceApi.GetDevices();
 
-    public virtual async Task<QueryResultDevicesDeviceInfo> GetDevicesAsync()
-    {
-        var response = await _api.GetDevices(null);
+        if (!response.IsSuccessful)
+            throw new EmbyApiException("Failed to fetch devices from Emby");
 
-        if (!response.IsSuccessful || response.Data == null)
-            throw new Exception("Failed to fetch devices from Emby");
-
-        return response.Data;
+        return response.Data ??
+               throw new EmbyApiException("Emby returned a successful response but device list data was null");
     }
 }
