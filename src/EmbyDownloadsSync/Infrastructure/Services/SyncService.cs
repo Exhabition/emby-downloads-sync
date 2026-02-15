@@ -63,7 +63,7 @@ public partial class SyncService(
 
 	public async Task SyncAllDevices()
 	{
-		LogStartingSyncCycle(logger);
+		LogSyncDevices(logger);
 
 		var masterDeviceId = settings.DeviceIds[0];
 		var masterDeviceJobs = await jobService.GetJobsByDeviceId(masterDeviceId);

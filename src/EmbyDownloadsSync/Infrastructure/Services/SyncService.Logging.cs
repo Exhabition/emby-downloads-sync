@@ -22,8 +22,8 @@ public partial class SyncService
     [LoggerMessage(Level = LogLevel.Information, Message = "All configured devices are valid")]
     private static partial void LogAllDevicesValid(ILogger logger);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Starting sync cycle...")]
-    private static partial void LogStartingSyncCycle(ILogger logger);
+    [LoggerMessage(Level = LogLevel.Debug, Message = "Syncing all devices...")]
+    private static partial void LogSyncDevices(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "Job {JobName} is in failed state, skipping")]
     private static partial void LogJobFailed(ILogger logger, string? jobName);
