@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>Emby.ApiClient</AssemblyName>
         <PackageId>Emby.ApiClient</PackageId>
         <OutputType>Library</OutputType>
@@ -10,6 +10,8 @@
         <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
         <RootNamespace>Emby.ApiClient</RootNamespace>
         <Version>4.9.3.0</Version>
+        <LangVersion>14</LangVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <PropertyGroup>
