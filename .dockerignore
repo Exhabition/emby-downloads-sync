@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/.vscode/
+.git/
+.gitignore
+*.md
+*.sln.DotSettings.user
+tests/
+appsettings.json

@@ -1,14 +1,15 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 
-COPY src/EmbyDownloadsSync/*.csproj ./Project/
-RUN dotnet restore ./Project/EmbyDownloadsSync.csproj
+COPY src/EmbyDownloadsSync/*.csproj ./src/EmbyDownloadsSync/
+COPY src/Emby.ApiClient/*.csproj ./src/Emby.ApiClient/
+RUN dotnet restore ./src/EmbyDownloadsSync/EmbyDownloadsSync.csproj
 
-COPY src/EmbyDownloadsSync ./Project
+COPY src/ ./src/
 
-RUN dotnet publish ./Project/EmbyDownloadsSync.csproj -c Release -o /app/out
+RUN dotnet publish ./src/EmbyDownloadsSync/EmbyDownloadsSync.csproj -c Release -o /app/out
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
 COPY --from=build /app/out ./
