@@ -23,16 +23,20 @@ public sealed class PluginOptions : EditableOptionsBase
     [Description("Build and display plans without creating download jobs.")]
     public bool DryRun { get; set; } = true;
 
+    [IsAdvanced]
     [DisplayName("Allow managed cleanup")]
     [Description("Reserved for verified Emby job deletion support. User-created jobs are never deleted.")]
     public bool AllowManagedCleanup { get; set; }
 
+    [IsAdvanced]
     [DisplayName("Default maximum creates per route")]
     public int DefaultMaximumCreates { get; set; } = 100;
 
+    [IsAdvanced]
     [DisplayName("Maximum retained run summaries")]
     public int RetainedRunCount { get; set; } = 50;
 
+    [IsAdvanced]
     [DisplayName("HTTP timeout (seconds)")]
     public int HttpTimeoutSeconds { get; set; } = 30;
 

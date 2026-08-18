@@ -1,14 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace EmbyDownloadsSync.Core.Domain;
 
 public enum SyncTopology
 {
+    [Description("One device to other devices")]
     OneToMany,
+    [Description("Several devices to one device")]
     ManyToOne,
+    [Description("Both directions")]
     Bidirectional,
+    [Description("Keep every device in sync")]
     Mesh,
+    [Description("Custom connections")]
     Explicit,
 }
 

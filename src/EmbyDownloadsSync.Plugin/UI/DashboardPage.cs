@@ -19,7 +19,7 @@ namespace EmbyDownloadsSync.Plugin.UI;
 public sealed class DashboardPageOptions : EditableOptionsBase
 {
     public override string EditorTitle => "Downloads Sync";
-    public override string EditorDescription => "Build flexible device synchronization routes, preview their plans, and apply missing download jobs.";
+    public override string EditorDescription => "Choose where downloads should be copied. The default settings are suitable for most routes; use Show advanced settings for more control.";
 
     public StatusItem Status { get; set; } = new StatusItem("Synchronization", "Ready", ItemStatus.None);
     public ButtonItem PreviewAll { get; set; } = new ButtonItem("Preview all routes") { CommandId = "PreviewAll", Icon = IconNames.preview };
@@ -27,109 +27,159 @@ public sealed class DashboardPageOptions : EditableOptionsBase
     public ButtonItem Refresh { get; set; } = new ButtonItem("Refresh") { CommandId = "Refresh", Icon = IconNames.refresh };
     public CaptionItem RoutesCaption { get; set; } = new CaptionItem("Routes");
     public GenericItemList Routes { get; set; } = new GenericItemList();
-    public CaptionItem EditorCaption { get; set; } = new CaptionItem("Route editor");
+    public CaptionItem EditorCaption { get; set; } = new CaptionItem("Copy downloads between devices");
 
+    [IsAdvanced]
     [DisplayName("Route ID")]
     [Description("Leave blank to create a route. Select a route above to edit it.")]
     public string RouteId { get; set; } = string.Empty;
-    [DisplayName("Name")]
+    [DisplayName("Name this setup")]
+    [Description("For example: Phone downloads to tablet.")]
     public string RouteName { get; set; } = "New route";
-    [DisplayName("Enabled")]
+    [DisplayName("Keep this setup active")]
     public bool RouteEnabled { get; set; } = true;
-    [DisplayName("Topology")]
-    public SyncTopology Topology { get; set; } = SyncTopology.OneToMany;
-    [DisplayName("Source device IDs")]
-    [Description("Comma-separated. For bidirectional and mesh routes, sources and targets are combined into one device group.")]
+    [DisplayName("Copy downloads from")]
+    [Description("Enter the source device ID. You can enter multiple IDs separated by commas.")]
     public string SourceDeviceIds { get; set; } = string.Empty;
-    [DisplayName("Target device IDs")]
+    [DisplayName("Copy downloads to")]
+    [Description("Enter one or more destination device IDs, separated by commas.")]
     public string TargetDeviceIds { get; set; } = string.Empty;
-    [DisplayName("Explicit edges")]
-    [Description("For Explicit topology only. One source>target edge per line.")]
+
+    [IsAdvanced]
+    public CaptionItem AdvancedRouteCaption { get; set; } = new CaptionItem("Advanced route settings");
+    [IsAdvanced]
+    [DisplayName("Device arrangement")]
+    [Description("Controls the direction downloads travel. One source to one or more destinations is the normal choice.")]
+    public SyncTopology Topology { get; set; } = SyncTopology.OneToMany;
+    [IsAdvanced]
+    [DisplayName("Custom device connections")]
+    [Description("Only used when device arrangement is Custom connections. Enter one source>destination connection per line.")]
     [EditMultiline(6)]
     public string ExplicitEdges { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Matching")]
     public JobMatchMode MatchMode { get; set; } = JobMatchMode.Exact;
+    [IsAdvanced]
     [DisplayName("Conflict policy")]
     public ConflictPolicy ConflictPolicy { get; set; } = ConflictPolicy.KeepTarget;
+    [IsAdvanced]
     [DisplayName("Reconciliation")]
     public ReconciliationMode ReconciliationMode { get; set; } = ReconciliationMode.CreateOnly;
+    [IsAdvanced]
     [DisplayName("Include job names")]
     [Description("Glob by default; for example Travel*. Leave empty for all jobs.")]
     public string IncludeNamePattern { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Exclude job names")]
     public string ExcludeNamePattern { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Patterns are regular expressions")]
     public bool PatternsAreRegularExpressions { get; set; }
+    [IsAdvanced]
     [DisplayName("Included statuses")]
     public string IncludedStatuses { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Excluded statuses")]
     public string ExcludedStatuses { get; set; } = "Failed";
+    [IsAdvanced]
     [DisplayName("User ID filter")]
     public long UserIdFilter { get; set; }
+    [IsAdvanced]
     [DisplayName("Category filter")]
     public string CategoryFilter { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Unwatched-only filter")]
     public bool? UnwatchedOnlyFilter { get; set; }
+    [IsAdvanced]
     [DisplayName("Sync-new-content filter")]
     public bool? SyncNewContentFilter { get; set; }
+    [IsAdvanced]
     [DisplayName("Quality filter")]
     public string QualityFilter { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Profile filter")]
     public string ProfileFilter { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Container filter")]
     public string ContainerFilter { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Video codec filter")]
     public string VideoCodecFilter { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Audio codec filter")]
     public string AudioCodecFilter { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Minimum bitrate")]
     public int MinimumBitrate { get; set; }
+    [IsAdvanced]
     [DisplayName("Maximum bitrate")]
     public int MaximumBitrate { get; set; }
+    [IsAdvanced]
     [DisplayName("Minimum item limit")]
     public int MinimumItemLimit { get; set; }
+    [IsAdvanced]
     [DisplayName("Maximum item limit")]
     public int MaximumItemLimit { get; set; }
+    [IsAdvanced]
     [DisplayName("Include item IDs")]
     public string IncludedItemIds { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Exclude item IDs")]
     public string ExcludedItemIds { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Maximum job age in days")]
     public int MaximumAgeDays { get; set; }
+    [IsAdvanced]
     [DisplayName("Name prefix")]
     public string NamePrefix { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Name suffix")]
     public string NameSuffix { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Override user ID")]
     [Description("Set to 0 to preserve the source user.")]
     public long OverrideUserId { get; set; }
+    [IsAdvanced]
     [DisplayName("Override unwatched-only")]
     public bool? OverrideUnwatchedOnly { get; set; }
+    [IsAdvanced]
     [DisplayName("Override sync-new-content")]
     public bool? OverrideSyncNewContent { get; set; }
+    [IsAdvanced]
     [DisplayName("Override item limit")]
     public int OverrideItemLimit { get; set; }
+    [IsAdvanced]
     [DisplayName("Override bitrate")]
     public int OverrideBitrate { get; set; }
+    [IsAdvanced]
     [DisplayName("Override quality")]
     public string OverrideQuality { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Override profile")]
     public string OverrideProfile { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Override container")]
     public string OverrideContainer { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Override video codec")]
     public string OverrideVideoCodec { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Override audio codec")]
     public string OverrideAudioCodec { get; set; } = string.Empty;
+    [IsAdvanced]
     [DisplayName("Minimum interval in minutes")]
     public int MinimumIntervalMinutes { get; set; } = 15;
+    [IsAdvanced]
     [DisplayName("Route dry run")]
     public bool RouteDryRun { get; set; }
+    [IsAdvanced]
     [DisplayName("Maximum creates")]
     public int MaximumCreates { get; set; } = 100;
+    [IsAdvanced]
     [DisplayName("Maximum managed deletions")]
     [Description("Stored for managed-exact routes. Deletion remains gated until Emby's contract is verified.")]
     public int MaximumManagedDeletes { get; set; }
+    [IsAdvanced]
     [DisplayName("Continue after individual errors")]
     public bool ContinueOnError { get; set; } = true;
 
@@ -190,7 +240,7 @@ internal sealed class DashboardPageView : PluginPageViewBase
             Icon = IconNames.sync,
             Status = route.Enabled ? ItemStatus.Succeeded : ItemStatus.None,
             PrimaryText = route.Name,
-            SecondaryText = $"{route.Topology} · {string.Join(", ", route.SourceDeviceIds)} → {string.Join(", ", route.TargetDeviceIds)} · {route.MatchMode}",
+            SecondaryText = DescribeRoute(route),
             Button1 = new ButtonItem("Edit") { CommandId = "SelectRoute", ItemData = route.Id, Data1 = route.Id },
             Button2 = new ButtonItem("Delete") { CommandId = "DeleteRoute", ItemData = route.Id, Data1 = route.Id },
         }).ToList();
@@ -376,6 +426,18 @@ internal sealed class DashboardPageView : PluginPageViewBase
         : throw new InvalidOperationException("Select or save a route first.");
 
     private static string ResolveId(string itemId, string data) => !string.IsNullOrWhiteSpace(data) ? data : itemId;
+    private static string DescribeRoute(SyncRoute route)
+    {
+        var sources = string.Join(", ", route.SourceDeviceIds);
+        var targets = string.Join(", ", route.TargetDeviceIds);
+        switch (route.Topology)
+        {
+            case SyncTopology.Bidirectional: return $"{sources} ↔ {targets}";
+            case SyncTopology.Mesh: return $"Keep downloads in sync across {sources}";
+            case SyncTopology.Explicit: return $"{route.ExplicitEdges.Count} custom device connection(s)";
+            default: return $"{sources} → {targets}";
+        }
+    }
     private static IList<string> Csv(string value) => value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(part => part.Trim()).Where(part => part.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     private static IList<long> LongCsv(string value) => Csv(value).Select(part => long.TryParse(part, out var parsed) ? parsed : throw new FormatException($"'{part}' is not a valid item ID.")).ToList();
     private static IList<DeviceEdge> ParseEdges(string value) => value.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(line => line.Split('>')).Select(parts => parts.Length == 2
