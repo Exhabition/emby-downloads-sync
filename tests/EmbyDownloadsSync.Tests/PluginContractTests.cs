@@ -32,6 +32,17 @@ public sealed class PluginContractTests
     }
 
     [Fact]
+    public void SettingsPageIsTheDefaultPluginConfigurationPage()
+    {
+        var pages = EmbyDownloadsSync.Plugin.Plugin.CreateUIPageControllers(new PluginInfo { Id = "plugin-id" }, null!, null!).ToArray();
+
+        Assert.Equal("EmbyDownloadsSyncSettings", pages[0].PageInfo.Name);
+        Assert.True(pages[0].PageInfo.IsMainConfigPage);
+        Assert.Equal("EmbyDownloadsSyncDashboard", pages[1].PageInfo.Name);
+        Assert.False(pages[1].PageInfo.IsMainConfigPage);
+    }
+
+    [Fact]
     public void DiscoveryContractsArePublicAndConstructible()
     {
         Assert.True(typeof(IScheduledTask).IsAssignableFrom(typeof(SynchronizeDownloadsTask)));
@@ -100,6 +111,19 @@ public sealed class PluginContractTests
 
         Assert.Equal("Luke's Phone (phone-id)", Assert.Single(options, option => option.Value == "phone-id").Name);
         Assert.Equal("Unknown device (offline-id)", Assert.Single(options, option => option.Value == "offline-id").Name);
+    }
+
+    [Theory]
+    [InlineData("Edit", "SelectRoute")]
+    [InlineData("Delete", "DeleteRoute")]
+    public void RouteButtonsSupportCurrentAndLegacyCommandFields(string caption, string commandId)
+    {
+        var button = DashboardPageView.CreateRouteButton(caption, commandId, "route-id");
+
+        Assert.Equal(commandId, button.CommandId);
+        Assert.Equal(commandId, button.Data1);
+        Assert.Equal("route-id", button.ItemData);
+        Assert.Equal("route-id", button.Data2);
     }
 
     [Fact]
