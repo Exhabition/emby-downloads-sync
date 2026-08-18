@@ -24,9 +24,9 @@ public sealed class DashboardPageOptions : EditableOptionsBase
     public override string EditorDescription => "Choose where downloads should be copied. The default settings are suitable for most routes; use Show advanced settings for more control.";
 
     public StatusItem Status { get; set; } = new StatusItem("Synchronization", "Ready", ItemStatus.None);
-    public ButtonItem PreviewAll { get; set; } = new ButtonItem("Preview all routes") { CommandId = "PreviewAll", Icon = IconNames.preview };
-    public ButtonItem ApplyAll { get; set; } = new ButtonItem("Apply all routes") { CommandId = "ApplyAll", Icon = IconNames.sync };
-    public ButtonItem Refresh { get; set; } = new ButtonItem("Refresh") { CommandId = "Refresh", Icon = IconNames.refresh };
+    public ButtonItem PreviewAll { get; set; } = new ButtonItem("Preview all routes") { CommandId = "PreviewAll", Data1 = "PreviewAll", Icon = IconNames.preview };
+    public ButtonItem ApplyAll { get; set; } = new ButtonItem("Apply all routes") { CommandId = "ApplyAll", Data1 = "ApplyAll", Icon = IconNames.sync };
+    public ButtonItem Refresh { get; set; } = new ButtonItem("Refresh") { CommandId = "Refresh", Data1 = "Refresh", Icon = IconNames.refresh };
     public CaptionItem RoutesCaption { get; set; } = new CaptionItem("Routes");
     public GenericItemList Routes { get; set; } = new GenericItemList();
     public CaptionItem EditorCaption { get; set; } = new CaptionItem("Copy downloads between devices");
@@ -53,10 +53,10 @@ public sealed class DashboardPageOptions : EditableOptionsBase
     [Browsable(false)]
     public List<EditorSelectOption> DeviceOptions { get; set; } = new List<EditorSelectOption>();
 
-    public ButtonItem NewRoute { get; set; } = new ButtonItem("New route") { CommandId = "NewRoute", Icon = IconNames.add };
-    public ButtonItem SaveRoute { get; set; } = new ButtonItem("Save route") { CommandId = "SaveRoute", Icon = IconNames.save };
-    public ButtonItem PreviewRoute { get; set; } = new ButtonItem("Preview route") { CommandId = "PreviewRoute", Icon = IconNames.preview };
-    public ButtonItem ApplyRoute { get; set; } = new ButtonItem("Apply route") { CommandId = "ApplyRoute", Icon = IconNames.sync };
+    public ButtonItem NewRoute { get; set; } = new ButtonItem("New route") { CommandId = "NewRoute", Data1 = "NewRoute", Icon = IconNames.add };
+    public ButtonItem SaveRoute { get; set; } = new ButtonItem("Save route") { CommandId = "SaveRoute", Data1 = "SaveRoute", Icon = IconNames.save };
+    public ButtonItem PreviewRoute { get; set; } = new ButtonItem("Preview route") { CommandId = "PreviewRoute", Data1 = "PreviewRoute", Icon = IconNames.preview };
+    public ButtonItem ApplyRoute { get; set; } = new ButtonItem("Apply route") { CommandId = "ApplyRoute", Data1 = "ApplyRoute", Icon = IconNames.sync };
     public CaptionItem ResultsCaption { get; set; } = new CaptionItem("Latest run");
     public string LatestRun { get; set; } = "No runs yet.";
 
@@ -264,8 +264,8 @@ internal sealed class DashboardPageView : PluginPageViewBase
             Status = route.Enabled ? ItemStatus.Succeeded : ItemStatus.None,
             PrimaryText = route.Name,
             SecondaryText = DescribeRoute(route),
-            Button1 = new ButtonItem("Edit") { CommandId = "SelectRoute", ItemData = route.Id, Data1 = route.Id },
-            Button2 = new ButtonItem("Delete") { CommandId = "DeleteRoute", ItemData = route.Id, Data1 = route.Id },
+            Button1 = CreateRouteButton("Edit", "SelectRoute", route.Id),
+            Button2 = CreateRouteButton("Delete", "DeleteRoute", route.Id, "Delete this route?"),
         }).ToList();
         Options.Routes = new GenericItemList(rows);
         var latest = runtime.Repository.GetState().Runs.FirstOrDefault();
@@ -449,6 +449,15 @@ internal sealed class DashboardPageView : PluginPageViewBase
         : throw new InvalidOperationException("Select or save a route first.");
 
     private static string ResolveId(string itemId, string data) => !string.IsNullOrWhiteSpace(data) ? data : itemId;
+    internal static ButtonItem CreateRouteButton(string caption, string commandId, string routeId, string confirmationPrompt = "") => new ButtonItem(caption)
+    {
+        CommandId = commandId,
+        Data1 = commandId,
+        ItemData = routeId,
+        Data2 = routeId,
+        ConfirmationPrompt = confirmationPrompt,
+    };
+
     internal static List<EditorSelectOption> BuildDeviceOptions(IEnumerable<DeviceDescriptor> devices, IEnumerable<SyncRoute> routes)
     {
         var choices = devices

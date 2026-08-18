@@ -54,13 +54,18 @@ public sealed class Plugin : BasePlugin, IHasUIPages, IHasPluginConfiguration
         {
             if (pages != null) return pages;
             var pluginInfo = GetPluginInfo();
-            return pages = new IPluginUIPageController[]
-            {
-                new DashboardPageController(pluginInfo, Runtime),
-                new SettingsPageController(pluginInfo, optionsStore),
-            };
+            return pages = CreateUIPageControllers(pluginInfo, Runtime, optionsStore);
         }
     }
+
+    internal static IReadOnlyCollection<IPluginUIPageController> CreateUIPageControllers(
+        PluginInfo pluginInfo,
+        PluginRuntime runtime,
+        PluginOptionsStore optionsStore) => new IPluginUIPageController[]
+        {
+            new SettingsPageController(pluginInfo, optionsStore),
+            new DashboardPageController(pluginInfo, runtime),
+        };
 
     public Type ConfigurationType => typeof(PluginOptions);
 
