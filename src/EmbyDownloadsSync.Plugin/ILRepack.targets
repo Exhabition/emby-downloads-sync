@@ -1,0 +1,18 @@
+<Project>
+  <Target Name="MergePluginDependencies" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <PluginMergeAssembly Include="$(TargetPath)" />
+      <PluginMergeAssembly Include="$(TargetDir)EmbyDownloadsSync.Core.dll" />
+      <PluginMergeLibrary Include="$(TargetDir)" />
+    </ItemGroup>
+    <MakeDir Directories="$(TargetDir)deploy" />
+    <ILRepack
+      InputAssemblies="@(PluginMergeAssembly)"
+      LibraryPath="@(PluginMergeLibrary)"
+      OutputFile="$(TargetDir)deploy/$(TargetFileName)"
+      TargetKind="Dll"
+      Internalize="true"
+      Parallel="false"
+      XmlDocumentation="true" />
+  </Target>
+</Project>

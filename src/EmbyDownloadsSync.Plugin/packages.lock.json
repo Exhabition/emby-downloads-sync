@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "dependencies": {
+    ".NETStandard,Version=v2.0": {
+      "ILRepack.Lib.MSBuild.Task": {
+        "type": "Direct",
+        "requested": "[2.0.46, )",
+        "resolved": "2.0.46",
+        "contentHash": "g5a/rQndAn0OczzunFutw3nCzQcfq96i7SYRKV11sc0LO+KN0MDbDHo2znLBK5ZC7duaD1RC62OwlhFlnkPQuQ=="
+      },
+      "MediaBrowser.Server.Core": {
+        "type": "Direct",
+        "requested": "[4.9.1.90, )",
+        "resolved": "4.9.1.90",
+        "contentHash": "lyThQ7kXhzLNisMfqzSoxrhG/7gnK9/lJyNfV/TCo10c30oKiTR2n5nG+ognv6hCNz9jmcPpAt3561Oj7EIVwQ==",
+        "dependencies": {
+          "MediaBrowser.Common": "4.9.1.90"
+        }
+      },
+      "NETStandard.Library": {
+        "type": "Direct",
+        "requested": "[2.0.3, )",
+        "resolved": "2.0.3",
+        "contentHash": "st47PosZSHrjECdjeIzZQbzivYBJFv6P2nv4cj2ypdI204DO+vZ7l5raGMiX4eXMJ53RfOIg+/s4DHVZ54Nu2A==",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "1.1.0"
+        }
+      },
+      "MediaBrowser.Common": {
+        "type": "Transitive",
+        "resolved": "4.9.1.90",
+        "contentHash": "QzXFYh7TPskAtctdCguJxep9aMSfIrsT4F+xUrdAVh4pj2KAD3DzwkY1DDPIUUD6M+Lgwag/NesBgd1pgLffbQ=="
+      },
+      "Microsoft.NETCore.Platforms": {
+        "type": "Transitive",
+        "resolved": "1.1.0",
+        "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
+      },
+      "embydownloadssync.core": {
+        "type": "Project"
+      }
+    }
+  }
+}

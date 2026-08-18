@@ -1,0 +1,15 @@
+name: emby-downloads-sync-integration
+
+services:
+  emby:
+    image: ghcr.io/linuxserver/emby:4.9.5.0-ls292
+    pull_policy: if_not_present
+    environment:
+      PUID: "${EMBY_TEST_PUID:-1000}"
+      PGID: "${EMBY_TEST_PGID:-1000}"
+      TZ: "${EMBY_TEST_TIMEZONE:-Etc/UTC}"
+    volumes:
+      - ./.state/config:/config
+    ports:
+      - "127.0.0.1:${EMBY_TEST_PORT:-18097}:8096"
+    restart: "no"

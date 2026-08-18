@@ -1,0 +1,57 @@
+name: Release Please
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  package:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.1xx
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+      - name: Restore, build, test, and smoke test
+        run: |
+          dotnet restore EmbyDownloadsSync.sln --locked-mode
+          dotnet build EmbyDownloadsSync.sln --configuration Release --no-restore
+          dotnet test EmbyDownloadsSync.sln --configuration Release --no-build --no-restore
+          ./scripts/smoke-deploy.sh
+      - name: Test plugin startup in Emby 4.9.5.0
+        run: ./scripts/emby-local.sh test
+      - name: Stop Emby integration server
+        if: always()
+        run: ./scripts/emby-local.sh down
+      - name: Package plugin
+        run: ./scripts/package.sh "${{ needs.release-please.outputs.version }}"
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ needs.release-please.outputs.tag_name }}" dist/* --clobber

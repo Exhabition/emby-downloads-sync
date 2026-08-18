@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>EmbyDownloadsSync</AssemblyName>
+    <RootNamespace>EmbyDownloadsSync.Plugin</RootNamespace>
+    <Description>Flexible download job synchronization for Emby devices.</Description>
+    <IsPublishable>true</IsPublishable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../EmbyDownloadsSync.Core/EmbyDownloadsSync.Core.csproj" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" PrivateAssets="all" />
+    <PackageReference Include="MediaBrowser.Server.Core" />
+  </ItemGroup>
+</Project>
