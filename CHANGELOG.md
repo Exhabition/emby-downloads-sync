@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/Exhabition/emby-downloads-sync/compare/v0.2.1...v0.3.0) (2026-08-18)
+
+
+### Features
+
+* simplify settings experience ([b285aa3](https://github.com/Exhabition/emby-downloads-sync/commit/b285aa3e0343ec6708d6cb0953c60835dd27746a))
+
 ## [0.2.1](https://github.com/Exhabition/emby-downloads-sync/compare/v0.2.0...v0.2.1) (2026-08-18)
 
 
