@@ -5,10 +5,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Web.GenericEdit;
+using Emby.Web.GenericEdit.Common;
 using Emby.Web.GenericEdit.Elements;
 using Emby.Web.GenericEdit.Elements.List;
 using EmbyDownloadsSync.Core.Domain;
 using EmbyDownloadsSync.Plugin.Persistence;
+using EmbyDownloadsSync.Plugin.Services;
 using EmbyDownloadsSync.Plugin.UI.Infrastructure;
 using MediaBrowser.Model.Attributes;
 using MediaBrowser.Model.Plugins;
@@ -39,11 +41,24 @@ public sealed class DashboardPageOptions : EditableOptionsBase
     [DisplayName("Keep this setup active")]
     public bool RouteEnabled { get; set; } = true;
     [DisplayName("Copy downloads from")]
-    [Description("Enter the source device ID. You can enter multiple IDs separated by commas.")]
+    [Description("Select the device whose downloads should be copied.")]
+    [SelectItemsSource(nameof(DeviceOptions))]
+    [EditMultilSelect]
     public string SourceDeviceIds { get; set; } = string.Empty;
     [DisplayName("Copy downloads to")]
-    [Description("Enter one or more destination device IDs, separated by commas.")]
+    [Description("Select one or more destination devices.")]
+    [SelectItemsSource(nameof(DeviceOptions))]
+    [EditMultilSelect]
     public string TargetDeviceIds { get; set; } = string.Empty;
+    [Browsable(false)]
+    public List<EditorSelectOption> DeviceOptions { get; set; } = new List<EditorSelectOption>();
+
+    public ButtonItem NewRoute { get; set; } = new ButtonItem("New route") { CommandId = "NewRoute", Icon = IconNames.add };
+    public ButtonItem SaveRoute { get; set; } = new ButtonItem("Save route") { CommandId = "SaveRoute", Icon = IconNames.save };
+    public ButtonItem PreviewRoute { get; set; } = new ButtonItem("Preview route") { CommandId = "PreviewRoute", Icon = IconNames.preview };
+    public ButtonItem ApplyRoute { get; set; } = new ButtonItem("Apply route") { CommandId = "ApplyRoute", Icon = IconNames.sync };
+    public CaptionItem ResultsCaption { get; set; } = new CaptionItem("Latest run");
+    public string LatestRun { get; set; } = "No runs yet.";
 
     [IsAdvanced]
     public CaptionItem AdvancedRouteCaption { get; set; } = new CaptionItem("Advanced route settings");
@@ -183,12 +198,6 @@ public sealed class DashboardPageOptions : EditableOptionsBase
     [DisplayName("Continue after individual errors")]
     public bool ContinueOnError { get; set; } = true;
 
-    public ButtonItem NewRoute { get; set; } = new ButtonItem("New route") { CommandId = "NewRoute", Icon = IconNames.add };
-    public ButtonItem SaveRoute { get; set; } = new ButtonItem("Save route") { CommandId = "SaveRoute", Icon = IconNames.save };
-    public ButtonItem PreviewRoute { get; set; } = new ButtonItem("Preview route") { CommandId = "PreviewRoute", Icon = IconNames.preview };
-    public ButtonItem ApplyRoute { get; set; } = new ButtonItem("Apply route") { CommandId = "ApplyRoute", Icon = IconNames.sync };
-    public CaptionItem ResultsCaption { get; set; } = new CaptionItem("Latest run");
-    public string LatestRun { get; set; } = "No runs yet.";
 }
 
 internal sealed class DashboardPageController : PluginPageControllerBase
@@ -212,11 +221,11 @@ internal sealed class DashboardPageController : PluginPageControllerBase
 
     public override PluginPageInfo PageInfo { get; }
 
-    public override Task<IPluginUIView> CreateDefaultPageView()
+    public override async Task<IPluginUIView> CreateDefaultPageView()
     {
         var view = new DashboardPageView(pluginInfo.Id, runtime);
-        view.Load();
-        return Task.FromResult<IPluginUIView>(view);
+        await view.LoadAsync().ConfigureAwait(false);
+        return view;
     }
 }
 
@@ -233,9 +242,23 @@ internal sealed class DashboardPageView : PluginPageViewBase
 
     private DashboardPageOptions Options => (DashboardPageOptions)ContentData;
 
-    public void Load()
+    public async Task LoadAsync()
     {
-        var rows = runtime.Repository.GetRoutes().Select(route => new GenericListItem
+        var routes = runtime.Repository.GetRoutes();
+        IList<DeviceDescriptor> devices;
+        string? deviceWarning = null;
+        try
+        {
+            devices = await runtime.DeviceCatalog.GetDevicesAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            runtime.Logger.ErrorException("Unable to load Emby sync devices", exception);
+            devices = new List<DeviceDescriptor>();
+            deviceWarning = "Device names could not be refreshed. Saved device IDs remain available.";
+        }
+        Options.DeviceOptions = BuildDeviceOptions(devices, routes);
+        var rows = routes.Select(route => new GenericListItem
         {
             Icon = IconNames.sync,
             Status = route.Enabled ? ItemStatus.Succeeded : ItemStatus.None,
@@ -249,8 +272,8 @@ internal sealed class DashboardPageView : PluginPageViewBase
         Options.LatestRun = latest == null
             ? "No runs yet."
             : $"{latest.FinishedUtc:u} · {(latest.Preview ? "preview" : "apply")} · planned {latest.PlannedCreates}, created {latest.Created}, dry-run {latest.DryRunSkipped}, skipped {latest.Skipped}, conflicts {latest.Conflicts}, failed {latest.Failed}";
-        Options.Status.Status = ItemStatus.Succeeded;
-        Options.Status.StatusText = $"{rows.Count} route(s) configured.";
+        Options.Status.Status = deviceWarning == null ? ItemStatus.Succeeded : ItemStatus.Warning;
+        Options.Status.StatusText = deviceWarning ?? $"{rows.Count} route(s) configured.";
     }
 
     public override async Task<IPluginUIView> RunCommand(string itemId, string commandId, string data)
@@ -259,11 +282,11 @@ internal sealed class DashboardPageView : PluginPageViewBase
         {
             switch (commandId)
             {
-                case "Refresh": Load(); break;
+                case "Refresh": await LoadAsync().ConfigureAwait(false); break;
                 case "NewRoute": Populate(new SyncRoute { Safety = { MaximumCreates = runtime.OptionsStore.Get().DefaultMaximumCreates } }); break;
                 case "SelectRoute": Select(ResolveId(itemId, data)); break;
-                case "DeleteRoute": runtime.Repository.DeleteRoute(ResolveId(itemId, data)); Load(); break;
-                case "SaveRoute": Save(); Load(); break;
+                case "DeleteRoute": runtime.Repository.DeleteRoute(ResolveId(itemId, data)); await LoadAsync().ConfigureAwait(false); break;
+                case "SaveRoute": Save(); await LoadAsync().ConfigureAwait(false); break;
                 case "PreviewAll": await RunAsync(true, null).ConfigureAwait(false); break;
                 case "ApplyAll": await RunAsync(false, null).ConfigureAwait(false); break;
                 case "PreviewRoute": await RunAsync(true, RequireSelectedRoute()).ConfigureAwait(false); break;
@@ -287,7 +310,7 @@ internal sealed class DashboardPageView : PluginPageViewBase
         Options.Status.Status = ItemStatus.InProgress;
         Options.Status.StatusText = preview ? "Building preview..." : "Applying synchronization plan...";
         var run = await runtime.Synchronizer.RunAsync(preview, true, routeId, null, CancellationToken.None).ConfigureAwait(false);
-        Load();
+        await LoadAsync().ConfigureAwait(false);
         Options.Status.Status = run.Success ? ItemStatus.Succeeded : ItemStatus.Warning;
         Options.Status.StatusText = $"Planned {run.PlannedCreates}, created {run.Created}, dry-run {run.DryRunSkipped}, failed {run.Failed}.";
     }
@@ -426,10 +449,48 @@ internal sealed class DashboardPageView : PluginPageViewBase
         : throw new InvalidOperationException("Select or save a route first.");
 
     private static string ResolveId(string itemId, string data) => !string.IsNullOrWhiteSpace(data) ? data : itemId;
-    private static string DescribeRoute(SyncRoute route)
+    internal static List<EditorSelectOption> BuildDeviceOptions(IEnumerable<DeviceDescriptor> devices, IEnumerable<SyncRoute> routes)
     {
-        var sources = string.Join(", ", route.SourceDeviceIds);
-        var targets = string.Join(", ", route.TargetDeviceIds);
+        var choices = devices
+            .Where(device => !string.IsNullOrWhiteSpace(device.Id))
+            .GroupBy(device => device.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.OrderByDescending(device => device.LastActivityUtc).First())
+            .ToDictionary(device => device.Id, StringComparer.OrdinalIgnoreCase);
+        var configuredIds = routes
+            .SelectMany(route => route.SourceDeviceIds.Concat(route.TargetDeviceIds)
+                .Concat(route.ExplicitEdges.SelectMany(edge => new[] { edge.SourceDeviceId, edge.TargetDeviceId })))
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => id.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var id in configuredIds)
+            if (!choices.ContainsKey(id))
+                choices[id] = new DeviceDescriptor { Id = id, Name = "Unknown device" };
+
+        return choices.Values
+            .OrderBy(device => device.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(device => device.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(device => new EditorSelectOption
+            {
+                Value = device.Id,
+                Name = $"{DisplayDeviceName(device)} ({device.Id})",
+                ShortName = DisplayDeviceName(device),
+                ToolTip = device.LastActivityUtc.HasValue
+                    ? $"Last active {device.LastActivityUtc.Value:u}"
+                    : $"Device ID: {device.Id}",
+                IsEnabled = true,
+            })
+            .ToList();
+    }
+
+    private static string DisplayDeviceName(DeviceDescriptor device) =>
+        string.IsNullOrWhiteSpace(device.Name) ? "Unnamed device" : device.Name.Trim();
+
+    private string DescribeRoute(SyncRoute route)
+    {
+        var namesById = Options.DeviceOptions.ToDictionary(option => option.Value, option => option.Name, StringComparer.OrdinalIgnoreCase);
+        var sources = string.Join(", ", route.SourceDeviceIds.Select(id => namesById.TryGetValue(id, out var name) ? name : id));
+        var targets = string.Join(", ", route.TargetDeviceIds.Select(id => namesById.TryGetValue(id, out var name) ? name : id));
         switch (route.Topology)
         {
             case SyncTopology.Bidirectional: return $"{sources} ↔ {targets}";
