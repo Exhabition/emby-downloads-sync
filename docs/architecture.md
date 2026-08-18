@@ -6,7 +6,7 @@
 
 `EmbyDownloadsSync.Plugin` adapts Emby devices and sync jobs, stores configuration and run history, applies plans, exposes administrator APIs and UI pages, and registers the scheduled task.
 
-Release builds merge Core into one `EmbyDownloadsSync.dll`. The generated all-endpoints client and standalone container are not runtime dependencies.
+Release builds merge Core into one platform-neutral `EmbyDownloadsSync.dll`. The generated all-endpoints client and standalone container are not runtime dependencies. Because the plugin has no native dependencies, the release publishes this DLL directly for Linux x64/ARM64 (glibc or musl), Windows x64, and macOS x64/ARM64 rather than producing redundant platform archives.
 
 ## Planning lifecycle
 

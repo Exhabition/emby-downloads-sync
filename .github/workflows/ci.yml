@@ -33,10 +33,15 @@ jobs:
       - name: Stop Emby integration server
         if: always()
         run: ./scripts/emby-local.sh down
-      - name: Smoke-test packaging
-        run: ./scripts/package.sh 0.0.0-ci
+      - name: Smoke-test release artifact
+        run: |
+          ./scripts/package.sh
+          test -f dist/EmbyDownloadsSync.dll
+          test -f dist/EmbyDownloadsSync.dll.sha256
+          test -f dist/LICENSE
+          (cd dist && sha256sum --check EmbyDownloadsSync.dll.sha256)
       - uses: actions/upload-artifact@v7
         with:
-          name: emby-downloads-sync-ci-package
+          name: emby-downloads-sync-ci-release
           path: dist/*
           if-no-files-found: error
