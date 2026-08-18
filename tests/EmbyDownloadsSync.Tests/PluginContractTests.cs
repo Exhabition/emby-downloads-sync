@@ -1,10 +1,14 @@
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using Emby.Web.GenericEdit;
+using Emby.Web.GenericEdit.Editors;
+using EmbyDownloadsSync.Core.Domain;
 using EmbyDownloadsSync.Plugin.Api;
 using EmbyDownloadsSync.Plugin.Configuration;
 using EmbyDownloadsSync.Plugin.Integration;
 using EmbyDownloadsSync.Plugin.Tasks;
 using EmbyDownloadsSync.Plugin.UI;
+using EmbyDownloadsSync.Plugin.Services;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Controller.Net;
 using MediaBrowser.Controller.Plugins;
@@ -63,6 +67,42 @@ public sealed class PluginContractTests
     }
 
     [Fact]
+    public void RouteEditorUsesDeviceSelectorsAndKeepsActionsAboveAdvancedFields()
+    {
+        var root = ((EditObjectContainer)new DashboardPageOptions().CreateEditContainer()).EditorRoot;
+        var source = Assert.IsType<EditorSelectMultiple>(Assert.Single(root.EditorItems, editor => editor.Name == nameof(DashboardPageOptions.SourceDeviceIds)));
+        var target = Assert.IsType<EditorSelectMultiple>(Assert.Single(root.EditorItems, editor => editor.Name == nameof(DashboardPageOptions.TargetDeviceIds)));
+        Assert.Equal(nameof(DashboardPageOptions.DeviceOptions), source.ItemsSourceId);
+        Assert.Equal(nameof(DashboardPageOptions.DeviceOptions), target.ItemsSourceId);
+        Assert.False(source.IsAdvanced);
+        Assert.False(target.IsAdvanced);
+
+        var actionsIndex = Array.FindIndex(root.EditorItems, editor => editor is EditorButtonGroup group &&
+            group.EditorItems.Any(button => button.Name == nameof(DashboardPageOptions.SaveRoute)));
+        var advancedIndex = Array.FindIndex(root.EditorItems, editor => editor.Name == nameof(DashboardPageOptions.AdvancedRouteCaption));
+        Assert.True(actionsIndex >= 0 && actionsIndex < advancedIndex);
+        Assert.All(root.EditorItems.Skip(advancedIndex), editor => Assert.True(editor.IsAdvanced, editor.Name));
+    }
+
+    [Fact]
+    public void DeviceSelectorsShowNamesAndPreserveUnavailableSavedIds()
+    {
+        var devices = new[]
+        {
+            new DeviceDescriptor { Id = "phone-id", Name = "Luke's Phone", LastActivityUtc = new DateTime(2026, 8, 18, 12, 0, 0, DateTimeKind.Utc) },
+        };
+        var routes = new[]
+        {
+            new SyncRoute { SourceDeviceIds = ["phone-id"], TargetDeviceIds = ["offline-id"] },
+        };
+
+        var options = DashboardPageView.BuildDeviceOptions(devices, routes);
+
+        Assert.Equal("Luke's Phone (phone-id)", Assert.Single(options, option => option.Value == "phone-id").Name);
+        Assert.Equal("Unknown device (offline-id)", Assert.Single(options, option => option.Value == "offline-id").Name);
+    }
+
+    [Fact]
     public void GlobalTuningOptionsAreAdvanced()
     {
         AssertSimple<PluginOptions>(nameof(PluginOptions.Enabled), nameof(PluginOptions.ApiKey), nameof(PluginOptions.DryRun));
@@ -108,4 +148,5 @@ public sealed class PluginContractTests
 
     private static void AssertSimple<T>(params string[] propertyNames) => Assert.All(propertyNames, propertyName =>
         Assert.Empty(typeof(T).GetProperty(propertyName)!.GetCustomAttributes(typeof(IsAdvancedAttribute), true)));
+
 }
