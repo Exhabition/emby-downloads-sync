@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
     <Authors>Exhabition and Emby Downloads Sync contributors</Authors>
     <RepositoryUrl>https://github.com/Exhabition/emby-downloads-sync</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
