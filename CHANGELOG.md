@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/Exhabition/emby-downloads-sync/compare/v0.4.0...v0.4.1) (2026-08-18)
+
+
+### Bug Fixes
+
+* route plugin settings and list commands ([013f778](https://github.com/Exhabition/emby-downloads-sync/commit/013f778cad7534119278b5f5801168384fcdac44))
+
 ## [0.4.0](https://github.com/Exhabition/emby-downloads-sync/compare/v0.3.0...v0.4.0) (2026-08-18)
 
 
