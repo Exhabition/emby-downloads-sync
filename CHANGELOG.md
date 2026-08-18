@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/Exhabition/emby-downloads-sync/compare/v0.3.0...v0.4.0) (2026-08-18)
+
+
+### Features
+
+* improve device settings workflow ([7ae2efd](https://github.com/Exhabition/emby-downloads-sync/commit/7ae2efdc36390afa2583f3167be3a69747d6f4ac))
+
 ## [0.3.0](https://github.com/Exhabition/emby-downloads-sync/compare/v0.2.1...v0.3.0) (2026-08-18)
 
 
