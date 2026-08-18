@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/Exhabition/emby-downloads-sync/compare/v0.2.0...v0.2.1) (2026-08-18)
+
+
+### Bug Fixes
+
+* publish universal plugin DLL ([3e4b0bf](https://github.com/Exhabition/emby-downloads-sync/commit/3e4b0bfcfa963c8af1878325b26db5d2ff904375))
+* publish universal plugin DLL ([0de5cf3](https://github.com/Exhabition/emby-downloads-sync/commit/0de5cf37fb5efa4423e355c751ee183741a93992))
+
 ## [0.2.0](https://github.com/Exhabition/emby-downloads-sync/compare/v0.1.0...v0.2.0) (2026-08-18)
 
 
